@@ -83,5 +83,68 @@ namespace LightsaberGame
 			LeftHand?.Delete();
 			RightHand?.Delete();
 		}
+
+
+		public short ConvertSample( float sample )
+		{
+			return (short)(sample * short.MaxValue);
+		}
+
+		public override void ClientSpawn()
+		{
+			base.ClientSpawn();
+
+			Log.Info( "client spawn" );
+
+
+			using ( var vorbis = new NVorbis.VorbisReader( "testlevel/Beat It.ogg" ) )
+			{
+				Log.Info( "Loaded OGG file." );
+
+				Log.Info( "Channels: " + vorbis.Channels );
+				Log.Info( "Sample Rate: " + vorbis.SampleRate );
+				Log.Info( "Length: " + vorbis.TotalTime );
+
+				var sound = Sound.FromScreen( "audiostream.default" ).CreateStream( vorbis.SampleRate, vorbis.Channels );
+
+				var readBuffer = new float[vorbis.Channels * vorbis.SampleRate / 5];  // 200ms
+				var writeBuffer = new short[readBuffer.Length];
+
+				int cnt;
+				while ( (cnt = vorbis.ReadSamples( readBuffer, 0, readBuffer.Length )) > 0 )
+				{
+					for ( int i = 0; i < readBuffer.Length; i++ )
+						writeBuffer[i] = ConvertSample( readBuffer[i] );
+
+					sound.WriteData( writeBuffer );
+				}
+
+
+				//// get the channels & sample rate
+				//var channels = vorbis.Channels;
+				//var sampleRate = vorbis.SampleRate;
+
+				//// OPTIONALLY: get a TimeSpan indicating the total length of the Vorbis stream
+				//var totalTime = vorbis.TotalTime;
+
+				//// create a buffer for reading samples
+				//var readBuffer = new float[channels * sampleRate / 5];  // 200ms
+
+				//// get the initial position (obviously the start)
+				//var position = TimeSpan.Zero;
+
+				//// go grab samples
+				//int cnt;
+				//while ( (cnt = vorbis.ReadSamples( readBuffer, 0, readBuffer.Length )) > 0 )
+				//{
+				//	// do stuff with the buffer
+				//	// samples are interleaved (chan0, chan1, chan0, chan1, etc.)
+				//	// sample value range is -0.99999994f to 0.99999994f unless vorbis.ClipSamples == false
+
+				//	// OPTIONALLY: get the position we just read through to...
+				//	position = vorbis.TimePosition;
+				//}
+			}
+		}
 	}
 }

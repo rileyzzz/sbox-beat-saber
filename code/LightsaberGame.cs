@@ -23,6 +23,7 @@ namespace LightsaberGame
 		{
 			base.PostLevelLoaded();
 
+
 		}
 
 		public override void ClientJoined(Client client)
