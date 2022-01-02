@@ -1,0 +1,14 @@
+.vs
+code/obj
+code/Properties
+materials/**/*.png
+materials/**/*.vmat
+models/**/*.fbx
+models/**/*.vmdl
+sounds/**/*.wav
+sounds/**/*.sound
+sounds/**/*.encoding.txt
+soundstacks/**/*.vmix
+decals/**/*.decal
+particles/**/*.vpcf
+maps/**/*.vmap
