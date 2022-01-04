@@ -4,7 +4,7 @@ using Sandbox.UI.Construct;
 using System;
 using System.Collections.Generic;
 
-namespace LightsaberGame
+namespace BeatSaber
 {
 	public partial class VRHand : ModelEntity
 	{
