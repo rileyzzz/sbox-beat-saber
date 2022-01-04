@@ -34,6 +34,8 @@ namespace Utils
 
 	public class SlicedModel
 	{
+		public Plane slicePlane;
+
 		public List<Vertex> Vertices = new();
 		public List<int> Indices = new();
 
@@ -41,10 +43,18 @@ namespace Utils
 
 		//public VertexAttribute[] Layout;
 
-		//public SlicedModel(VertexAttribute[] layout)
-		//{
-		//	//Layout = layout;
-		//}
+		public SlicedModel( Plane plane )
+		{
+			slicePlane = plane;
+		}
+
+		public Vector3[] GetVertices()
+		{
+			var verts = new Vector3[Vertices.Count];
+			for ( int i = 0; i < Vertices.Count; i++ )
+				verts[i] = Vertices[i].Position;
+			return verts;
+		}
 
 		public void AddTriangle( Vertex a, Vertex b, Vertex c )
 		{
@@ -75,6 +85,11 @@ namespace Utils
 
 		int GetOrCreateIndex(Vertex v)
 		{
+			// set our third texcoord to the plane
+			v.TexCoord2 = new Vector4(slicePlane.Normal, slicePlane.Distance);
+			//Log.Info( "normal " + slicePlane.Normal + " distance " + slicePlane.Distance );
+			//v.TexCoord2 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
+
 			if ( IndexMap.TryGetValue( v, out var index ) )
 				return index;
 
@@ -98,14 +113,13 @@ namespace Utils
 
 	public static class ModelSlicer
 	{
-
-		public static void SliceModel(Model model, Material material, Plane plane, out Mesh FrontMesh, out Mesh BackMesh)
+		public static void SliceModel(Model model, Material material, Plane plane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices)
 		{
 			Vertex[] vertices = model.GetVertices();
 			uint[] indices = model.GetIndices();
 
-			SlicedModel Front = new();
-			SlicedModel Back = new();
+			SlicedModel Front = new( plane );
+			SlicedModel Back = new( plane );
 
 			//loop through each triangle
 			for ( int i = 0; i + 2 < indices.Length; i += 3 )
@@ -163,6 +177,11 @@ namespace Utils
 			//Material mat = Material.Load( "dev/helper/testgrid.vmat" );
 			FrontMesh = Front.ToMesh( material );
 			BackMesh = Back.ToMesh( material );
+
+			FrontVertices = Front.GetVertices();
+			BackVertices = Back.GetVertices();
+
+
 		}
 
 		static void SliceTriangle(Vertex[] triangle, int splitVertex, Plane plane, out Vertex[] a_triangle, out Vertex[] bc_quad)

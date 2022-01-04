@@ -1,0 +1,95 @@
+//=========================================================================================================================
+// Optional
+//=========================================================================================================================
+HEADER
+{
+	CompileTargets = ( IS_SM_50 && ( PC || VULKAN ) );
+	Description = "Sliced block";
+
+	DevShader = true;
+}
+
+FEATURES
+{
+    #include "common/features.hlsl"
+}
+
+MODES
+{
+    VrForward();													// Indicates this shader will be used for main rendering
+    Depth( "vr_depth_only.vfx" ); 									// Shader that will be used for shadowing and depth prepass
+    ToolsVis( S_MODE_TOOLS_VIS ); 									// Ability to see in the editor
+    ToolsWireframe( "vr_tools_wireframe.vfx" ); 					// Allows for mat_wireframe to work
+	ToolsShadingComplexity( "vr_tools_shading_complexity.vfx" ); 	// Shows how expensive drawing is in debug view
+}
+
+//=========================================================================================================================
+COMMON
+{
+	#include "common/shared.hlsl"
+}
+
+//=========================================================================================================================
+
+struct VertexInput
+{
+	#include "common/vertexinput.hlsl"
+    float4 vCutPlane : TEXCOORD2 < Semantic( LowPrecisionUv2 ); >;
+};
+
+//=========================================================================================================================
+
+struct PixelInput
+{
+	#include "common/pixelinput.hlsl"
+    float4 vCutPlane : TEXCOORD11;
+    float3 vPositionOs : TEXCOORD13;
+};
+
+//=========================================================================================================================
+
+VS
+{
+	#include "common/vertex.hlsl"
+
+	PixelInput MainVs( INSTANCED_SHADER_PARAMS( VS_INPUT i ) )
+	{
+		PixelInput o = ProcessVertex( i );
+		// Add your vertex manipulation functions here
+        o.vCutPlane = i.vCutPlane;
+        o.vPositionOs = i.vPositionOs;
+		return FinalizeVertex( o );
+	}
+}
+
+//=========================================================================================================================
+
+PS
+{
+    #include "common/pixel.hlsl"
+
+    float g_flCutSize < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Block,10/Slice,10/1" ); >;
+    float4 g_vCutColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Block,10/Slice,10/2" ); >;
+    float g_flCutStrength < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Block,10/Slice,10/3" ); >;
+    
+    float DistanceToPlane(float4 plane, float3 pos)
+    {
+        return dot(plane.xyz, pos) + plane.w;
+    }
+
+
+	PS_OUTPUT MainPs( PixelInput input )
+	{
+        Material m = GatherMaterial( input );
+
+        float4 cutPlane = input.vCutPlane;
+        //cutPlane = float4(0.0f, 1.0f, 0.0f, 0.0f);
+        float dist = DistanceToPlane(cutPlane, input.vPositionOs);
+
+        float amount = saturate(g_flCutSize - abs(dist)) * g_flCutStrength;
+        //m.Albedo += g_vCutColor.rgb * amount;
+        m.Emission = g_vCutColor.rgb * amount;
+
+        return FinalizePixelMaterial( input, m );
+	}
+}

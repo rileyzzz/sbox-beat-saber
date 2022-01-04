@@ -44,6 +44,11 @@ namespace BeatSaber
 			return 0.0f;
 		}
 
+		Vector3 GetDirectionVector( CutDirection dir )
+		{
+			return Rotation.From( 0.0f, 180.0f, GetDirectionAngle( Data.Direction ) ).Down;
+		}
+
 		void Update()
 		{
 			if(Data.Type == NoteType.Red || Data.Type == NoteType.Blue)
@@ -68,7 +73,7 @@ namespace BeatSaber
 
 		}
 
-		void CreateGib(string name, Mesh mesh)
+		void CreateGib( string name, Mesh mesh, Vector3[] vertices )
 		{
 			var gib = new PropGib
 			{
@@ -79,18 +84,20 @@ namespace BeatSaber
 				BreakpieceName = name
 			};
 
-			gib.SetModel( Model.Builder.AddMesh( mesh ).AddCollisionSphere( 5.0f ).Create() );
+			gib.SetModel( Model.Builder.AddMesh( mesh ).AddCollisionHull(vertices).Create() );
 			gib.SetInteractsAs( CollisionLayer.Debris );
 
-			_ = FadeAsync( gib, 1.5f );
+			gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
+
+			_ = FadeAsync( gib, 0.25f );
 		}
 
 		static async Task FadeAsync( Prop gib, float fadeTime )
 		{
-			fadeTime += Rand.Float( -1, 1 );
+			//fadeTime += Rand.Float( -1, 1 );
 
-			if ( fadeTime < 0.5f )
-				fadeTime = 0.5f;
+			if ( fadeTime < 0.25f )
+				fadeTime = 0.25f;
 
 			await gib.Task.DelaySeconds( fadeTime );
 
@@ -107,17 +114,18 @@ namespace BeatSaber
 			gib.Delete();
 		}
 
+		static readonly Material sliceMaterial = Material.Load( "materials/block/block.vmat" );
+
 		public void Slice()
 		{
 			Plane testPlane = new Plane(new Vector3(), new Vector3(0.0f, 1.0f, 0.0f));
 
-			Material SlicedMaterial = Material.Load( "materials/block/block.vmat" );
-			Utils.ModelSlicer.SliceModel( GetModel(), SlicedMaterial, testPlane, out Mesh FrontMesh, out Mesh BackMesh );
+			Utils.ModelSlicer.SliceModel( GetModel(), sliceMaterial, testPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
 			SetModel( "" );
 
-			CreateGib("front", FrontMesh);
-			CreateGib("back", BackMesh);
+			CreateGib( "front", FrontMesh, FrontVertices );
+			CreateGib( "back", BackMesh, BackVertices );
 		}
 	}
 }
