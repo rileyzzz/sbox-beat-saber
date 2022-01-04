@@ -143,13 +143,27 @@ namespace BeatSaber
 			//	note.Position += new Vector3( Time.Delta * beatsPerSecond * UnitSize, 0.0f, 0.0f );
 			//}
 
+			bool newHitThisTick = false;
+
 			float offset = Stream.TimeElapsed * beatsPerSecond * UnitSize;
 			foreach ( var note in ClientNotes )
 			{
 				var data = note.Data;
-				note.Position = note.Position.WithX(data.Time * UnitSize - offset);
+				float noteTime = data.Time * UnitSize - offset;
+				note.Position = note.Position.WithX( noteTime );
+
+				if(noteTime <= 0 && !note.SoundPlayed)
+				{
+					note.SoundPlayed = true;
+					newHitThisTick = true;
+
+					note.Slice();
+				}
 			}
 
+			if(newHitThisTick)
+				PlaySound("note_hit");
+			
 			var left_data = Stream.GetVisualizerData(0);
 			var right_data = Stream.GetVisualizerData(1);
 
