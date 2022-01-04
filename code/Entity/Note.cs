@@ -91,19 +91,19 @@ namespace BeatSaber
 
 			gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
 
-			_ = FadeAsync( gib, 0.25f );
+			_ = FadeAsync( gib, 0.2f );
 		}
 
 		static async Task FadeAsync( Prop gib, float fadeTime )
 		{
 			//fadeTime += Rand.Float( -1, 1 );
 
-			if ( fadeTime < 0.25f )
-				fadeTime = 0.25f;
+			if ( fadeTime < 0.2f )
+				fadeTime = 0.2f;
 
 			await gib.Task.DelaySeconds( fadeTime );
 
-			var fadePerFrame = 5 / 255.0f;
+			var fadePerFrame = 10 / 255.0f;
 
 			while ( gib.RenderColor.a > 0 )
 			{

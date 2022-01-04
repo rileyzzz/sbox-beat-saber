@@ -1,0 +1,173 @@
+//=========================================================================================================================
+// Optional
+//=========================================================================================================================
+HEADER
+{
+	CompileTargets = ( IS_SM_50 && ( PC || VULKAN ) );
+	Description = "FFT Grid";
+
+	DevShader = true;
+}
+
+FEATURES
+{
+    #include "common/features.hlsl"
+}
+
+MODES
+{
+    VrForward();													// Indicates this shader will be used for main rendering
+    // Depth( "vr_depth_only.vfx" ); 									// Shader that will be used for shadowing and depth prepass
+    ToolsVis( S_MODE_TOOLS_VIS ); 									// Ability to see in the editor
+    ToolsWireframe( "vr_tools_wireframe.vfx" ); 					// Allows for mat_wireframe to work
+	ToolsShadingComplexity( "vr_tools_shading_complexity.vfx" ); 	// Shows how expensive drawing is in debug view
+}
+
+//=========================================================================================================================
+COMMON
+{
+	#include "common/shared.hlsl"
+}
+
+//=========================================================================================================================
+
+struct VertexInput
+{
+	#include "common/vertexinput.hlsl"
+};
+
+//=========================================================================================================================
+
+struct PixelInput
+{
+	#include "common/pixelinput.hlsl"
+};
+
+//=========================================================================================================================
+
+// struct GeometryInput
+// {
+// 	//float3 vPositionOs;
+//     //float2 vTexCoord;	
+//     //float4 vNormalOs;	
+//     float3 vPositionOs : POSITION < Semantic( PosXyz ); >;
+//     float2 vTexCoord : TEXCOORD0 < Semantic( LowPrecisionUv ); >;	
+//     float4 vNormalOs : NORMAL < Semantic( OptionallyCompressedTangentFrame ); >;	
+// };
+
+VS
+{
+	#include "common/vertex.hlsl"
+
+    CreateInputTexture2D( GridData, Linear, 8, "", "", "Grid,10/10/1", Default3( 1.0, 1.0, 1.0 ) );
+    CreateTexture2DInRegister( g_tGridData, 0 ) < Channel( R, None( GridData ), Linear ); OutputFormat( R32F ); SrgbRead( true ); >;
+
+    //CreateInputTexture2D( g_tGridData, Linear, 8, "", "", "Grid,10/10", Default3( 1.0, 1.0, 1.0 ) );
+
+	PixelInput MainVs( INSTANCED_SHADER_PARAMS( VS_INPUT i ) )
+	{
+        float height = Tex2DLevel(g_tGridData, i.vTexCoord.xy, 0).r;
+        i.vPositionOs.z += height;
+
+        PixelInput o = VS_SharedStandardProcessing( i );
+
+        o.vVertexColor.r = height;
+
+        // GeometryInput o;
+        // o.vPositionOs = i.vPositionOs;
+        // o.vTexCoord = i.vTexCoord;
+        // o.vNormalOs = i.vNormalOs;
+
+		//GeometryInput o = ProcessVertex( i );
+		// Add your vertex manipulation functions here
+        //float4 val = Tex2DLevel(g_tGridData, i.vTexCoord.xy, 0);
+
+        
+
+		return FinalizeVertex( o );
+
+        //return o;
+	}
+}
+
+
+// GS
+// {
+//     #include "common.fxc"
+//     //#include "common/vertex.hlsl"
+
+//     //CreateInputTexture2D( GridData, Linear, 8, "", "", "Grid,10/10", Default3( 1.0, 1.0, 1.0 ) );
+// 	//CreateTexture2DInRegister( g_tGridData, 0 ) < Channel( RGBA, None( GridData ), Srgb ); OutputFormat( RGBA8888 ); SrgbRead( true ); >;
+
+//     // CreateInputTexture2D( g_tGridData, Linear, 8, "", "", "Grid,10/10", Default3( 1.0, 1.0, 1.0 ) );
+//     // //string g_inputTexture2D_g_tGridData<string inputColorSpace = "Linear"; string minPrecision = "8"; string imageAlgorithm = ""; string fileExt = ""; string uigroup = "Grid,10/10"; Default3( 1.0, 1.0, 1.0 ); >;
+//     // //string g_tGridData<string inputColorSpace = "Linear"; string minPrecision = "8"; string imageAlgorithm = ""; string fileExt = ""; string uigroup = "Grid,10/10"; Default3( 1.0, 1.0, 1.0 ); >;
+
+//     CreateInputTexture2D( GridData, Linear, 8, "", "", "Grid,10/10", Default3( 1.0, 1.0, 1.0 ) );
+//     CreateTexture2DInRegister( g_tGridData, 0 ) < Channel( RGBA, None( GridData ), Srgb ); OutputFormat( RGBA8888 ); SrgbRead( true ); >;
+//     //SamplerState g_tGridData_sampler : register(s0);
+//     //Texture2D<float4> g_tGridData: register(t0) < Channel( RGBA, None( GridData ), Srgb ); OutputFormat( RGBA8888 ); SrgbRead( true ); >;
+    
+//     [maxvertexcount(3)]
+//     void MainGs( triangle PixelInput input[3], inout TriangleStream<PixelInput> OutputStream ) 
+//     {
+//         PixelInput output = (PixelInput)0;
+
+//         for( uint i = 0; i < 3; i++ )
+//         {
+//             //output = ProcessVertex( input[i] );
+//             float3 posWs = input[i].vPositionWs;
+
+//             posWs.z += Tex2DLevel(g_tGridData, input[i].vTextureCoords.xy, 0).x;
+
+//             output.vPositionPs = mul(g_matWorldToProjection, float4(g_vWorldToCameraOffset.xyz + posWs, 1.0));
+
+//             OutputStream.Append( output );
+//         }
+        
+//         OutputStream.RestartStrip();
+//     }
+// }
+
+//=========================================================================================================================
+
+PS
+{
+    // #include "common/pixel.hlsl"
+
+	// PS_OUTPUT MainPs( PixelInput input )
+	// {
+    //     Material m = GatherMaterial( input );
+
+    //     return FinalizePixelMaterial( input, m );
+	// }
+    //CreateInputTexture2D( g_tGridData, Linear, 8, "", "", "Grid,10/10", Default3( 1.0, 1.0, 1.0 ) );
+    //string g_inputTexture2D_g_tGridData<string inputColorSpace = "Linear"; string minPrecision = "8"; string imageAlgorithm = ""; string fileExt = ""; string uigroup = "Grid,10/10"; Default3( 1.0, 1.0, 1.0 ); >;
+    //string g_tGridData<string inputColorSpace = "Linear"; string minPrecision = "8"; string imageAlgorithm = ""; string fileExt = ""; string uigroup = "Grid,10/10"; Default3( 1.0, 1.0, 1.0 ); >;
+    //SamplerState g_tGridData_sampler : register(s0);
+    //Texture2D<float4> g_tGridData: register(t0);
+
+    float4 g_vLowColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Grid,10/10/2" ); >;
+    float4 g_vHighColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Grid,10/10/3" ); >;
+    float g_vHeightScale < Default( 1.0f ); UiGroup( "Grid,10/10/4" ); >;
+
+	struct PS_OUTPUT
+	{
+		float4 vColor : SV_Target0;
+		// float depth : SV_Depth;
+	};
+
+
+
+	PS_OUTPUT MainPs( PixelInput i )
+	{
+		PS_OUTPUT o;
+        //o.vColor = float4(0.0f, 1.0f, 0.0f, 1.0f);
+        o.vColor = lerp(g_vLowColor, g_vHighColor, saturate(i.vVertexColor.r * g_vHeightScale));
+        
+        //o.vColor = Tex2DLevel(g_tGridData, i.vTextureCoords.xy, 0);
+		
+        
+        return o;
+	}
+}

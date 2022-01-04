@@ -31,6 +31,7 @@ namespace BeatSaber
 		const int numVisualizerBars = 256;
 		VisualizerBar[] LeftBars;
 		VisualizerBar[] RightBars;
+		VisualizerGrid Grid;
 
 		public BeatSaberEnvironment()
 		{
@@ -84,12 +85,14 @@ namespace BeatSaber
 				LeftBars[i] = Create<VisualizerBar>();
 				RightBars[i] = Create<VisualizerBar>();
 
-				LeftBars[i].Position = new Vector3( i * UnitSize, 80.0f, 0.0f );
-				RightBars[i].Position = new Vector3( i * UnitSize, -80.0f, 0.0f );
+				LeftBars[i].Position = new Vector3( i * UnitSize, 200.0f, 0.0f );
+				RightBars[i].Position = new Vector3( i * UnitSize, -200.0f, 0.0f );
 
 				LeftBars[i].Scale = 0.04f;
 				RightBars[i].Scale = 0.04f;
 			}
+
+			Grid = new VisualizerGrid() { Position = new Vector3(1200.0f, 0.0f, -800.0f), Scale = 10.0f };
 
 			//foreach ( var data in NoteData )
 			foreach ( var data in Level.Notes )
@@ -163,14 +166,21 @@ namespace BeatSaber
 
 			if(newHitThisTick)
 				PlaySound("note_hit");
-			
-			var left_data = Stream.GetVisualizerData(0);
-			var right_data = Stream.GetVisualizerData(1);
 
-			if ( left_data.Length > 0 && right_data.Length > 0 )
+			var left_window = Stream.GetVisualizerWindow(0);
+			var right_window = Stream.GetVisualizerWindow(1);
+
+			if( left_window != null )
+				UpdateVisualizerRow( left_window?.GetFFTData1D(), LeftBars );
+
+			if ( right_window != null )
+				UpdateVisualizerRow( right_window?.GetFFTData1D(), RightBars );
+			
+			if ( left_window != null )
 			{
-				UpdateVisualizerRow(left_data, LeftBars);
-				UpdateVisualizerRow(right_data, RightBars);
+				((MusicStream.VisualizerWindow)left_window).GetFFTData2D( out float[] x, out float[] y );
+
+				Grid.UpdateTexture( x, y );
 			}
 		}
 	}
