@@ -26,6 +26,9 @@ MODES
 //=========================================================================================================================
 COMMON
 {
+    #define S_TRANSLUCENT 1
+    #define BLEND_MODE_ALREADY_SET
+
 	#include "common/shared.hlsl"
 }
 
@@ -67,6 +70,8 @@ VS
 PS
 {
     #include "common/pixel.hlsl"
+
+    RenderState( BlendEnable, true );
 
     float g_flCutSize < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Block,10/Slice,10/1" ); >;
     float4 g_vCutColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Block,10/Slice,10/2" ); >;

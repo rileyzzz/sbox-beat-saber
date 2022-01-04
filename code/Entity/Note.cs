@@ -7,6 +7,8 @@ namespace BeatSaber
 {
 	public partial class Note : ModelEntity
 	{
+		static readonly Model BlockModel = Model.Load( "models/block.vmdl" );
+
 		BeatSaberNote _data;
 		public BeatSaberNote Data
 		{
@@ -53,7 +55,7 @@ namespace BeatSaber
 		{
 			if(Data.Type == NoteType.Red || Data.Type == NoteType.Blue)
 			{
-				SetModel( "models/block.vmdl" );
+				SetModel( BlockModel );
 				Rotation = Rotation.From( 0.0f, 180.0f, GetDirectionAngle(Data.Direction) );
 
 				bool red = Data.Type == NoteType.Red;
@@ -118,9 +120,9 @@ namespace BeatSaber
 
 		public void Slice()
 		{
-			Plane testPlane = new Plane(new Vector3(), new Vector3(0.0f, 1.0f, 0.0f));
-
-			Utils.ModelSlicer.SliceModel( GetModel(), sliceMaterial, testPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+			Plane testPlane = new Plane(new Vector3(), Vector3.Random.Normal);
+			
+			Utils.ModelSlicer.SliceModel( BlockModel, sliceMaterial, testPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
 			SetModel( "" );
 
