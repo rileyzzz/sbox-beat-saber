@@ -22,7 +22,7 @@ namespace BeatSaber
 			Light = Create<SpotLightEntity>();
 			Light.SetParent( this, "light" );
 
-			Light.Brightness = 1.0f;
+			Light.Brightness = 0.4f;
 
 			//Light.UseFogNoShadows();
 			//stength?
@@ -31,7 +31,7 @@ namespace BeatSaber
 
 			Light.InnerConeAngle = 15;
 			Light.OuterConeAngle = 30;
-			Light.FogStength = 10.0f;
+			Light.FogStength = 4.0f;
 		}
 
 		public void Pulse()

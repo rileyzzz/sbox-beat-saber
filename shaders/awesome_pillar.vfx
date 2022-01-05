@@ -1,0 +1,87 @@
+//=========================================================================================================================
+// Optional
+//=========================================================================================================================
+HEADER
+{
+	CompileTargets = ( IS_SM_50 && ( PC || VULKAN ) );
+	Description = "awesome pillar";
+
+	DevShader = true;
+}
+
+FEATURES
+{
+    #include "common/features.hlsl"
+}
+
+MODES
+{
+    VrForward();													// Indicates this shader will be used for main rendering
+    Depth( "vr_depth_only.vfx" ); 									// Shader that will be used for shadowing and depth prepass
+    ToolsVis( S_MODE_TOOLS_VIS ); 									// Ability to see in the editor
+    ToolsWireframe( "vr_tools_wireframe.vfx" ); 					// Allows for mat_wireframe to work
+	ToolsShadingComplexity( "vr_tools_shading_complexity.vfx" ); 	// Shows how expensive drawing is in debug view
+}
+
+//=========================================================================================================================
+COMMON
+{
+	#include "common/shared.hlsl"
+}
+
+//=========================================================================================================================
+
+struct VertexInput
+{
+	#include "common/vertexinput.hlsl"
+};
+
+//=========================================================================================================================
+
+struct PixelInput
+{
+	#include "common/pixelinput.hlsl"
+};
+
+//=========================================================================================================================
+
+VS
+{
+	#include "common/vertex.hlsl"
+
+	PixelInput MainVs( INSTANCED_SHADER_PARAMS( VS_INPUT i ) )
+	{
+		PixelInput o = ProcessVertex( i );
+		// Add your vertex manipulation functions here
+
+		return FinalizeVertex( o );
+	}
+}
+
+//=========================================================================================================================
+
+PS
+{
+    #include "common/pixel.hlsl"
+
+    //CreateInputTexture2D( OverlayTexture, Srgb, 8, "", "", "Pillar,10/1", Default3( 1.0, 1.0, 1.0 ) );
+    //CreateTexture2DInRegister( g_tOverlayTexture, 4 ) < Channel( RGBA, None( OverlayTexture ), Srgb ); OutputFormat( RGBA8888 ); SrgbRead( true ); >;
+    CreateInputTexture2D( OverlayTexture, Linear, 8, "", "", "Pillar,10/1", Default3( 1.0, 1.0, 1.0 ) );
+    CreateTexture2D( g_tOverlayTexture ) < Channel( RGB, Box( OverlayTexture ), Linear ); OutputFormat( DXT1 ); SrgbRead( false ); >;
+
+    float g_flOverlaySpeed < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/2" ); >;
+    float g_flOverlayScale < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/3" ); >;
+    float g_flOverlayStrength < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/4" ); >;
+    float4 g_vOverlayColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Pillar,10/5" ); >;
+
+	PS_OUTPUT MainPs( PixelInput input )
+	{
+        Material m = GatherMaterial( input );
+
+        float3 wsPos = input.vPositionWithOffsetWs - g_vWorldToCameraOffset.xyz;
+
+        m.Emission = Tex2D( g_tOverlayTexture, float2(input.vTextureCoords.x, wsPos.z) * g_flOverlayScale - float2(0.0f, g_flTime * g_flOverlaySpeed) ).r * g_vOverlayColor * input.vVertexColor.rgb * g_flOverlayStrength;
+
+        return FinalizePixelMaterial( input, m );
+	}
+}

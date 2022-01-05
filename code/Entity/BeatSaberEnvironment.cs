@@ -36,7 +36,17 @@ namespace BeatSaber
 		const int numSpotlights = 10;
 		BPMSpotlight[] Spotlights;
 
+		List<AwesomePillar> Pillars = new();
+
 		int BeatsPlayed = 0;
+
+		int ColorCycle = 0;
+		Color[] CycleColors = new Color[] {
+			Color.Red,
+			Color.Blue,
+			Color.Green,
+			Color.Magenta
+		};
 
 		public BeatSaberEnvironment()
 		{
@@ -123,6 +133,15 @@ namespace BeatSaber
 				ClientNotes.Add(ent);
 			}
 
+			Pillars.Clear();
+			foreach( var entity in Entity.All )
+			{
+				if ( entity is not AwesomePillar pillar )
+					continue;
+
+				Pillars.Add( pillar );
+			}
+
 			DebugOverlay.Line(new Vector3(0.0f, -100.0f, 0.0f), new Vector3(0.0f, 100.0f, 0.0f), 100.0f);
 		}
 
@@ -166,6 +185,14 @@ namespace BeatSaber
 				//BPM pulse
 				foreach ( var light in Spotlights )
 					light.Pulse();
+
+				Color pillarColor = Color.Random;
+
+				if ( ColorCycle++ >= CycleColors.Length )
+					ColorCycle = 0;
+
+				foreach ( var pillar in Pillars )
+					pillar.RenderColor = CycleColors[ColorCycle];
 			}
 
 			//Time.Delta
