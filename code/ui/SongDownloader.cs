@@ -15,7 +15,7 @@ namespace BeatSaber
 
 		List<DownloadPanel> Songs = new();
 
-		Sandbox.Internal.Http FinderTask = null;
+		BeatSaver.RequestInfo FinderTask = null;
 
 
 		public SongDownloader()
@@ -37,21 +37,15 @@ namespace BeatSaber
 			SearchBar.Placeholder = SearchBar.Text == "" ? "Search..." : "";
 
 			// end any running tasks
-			try
-			{
-				Log.Info("dispose task");
-				if ( FinderTask != null )
-					FinderTask.Dispose();
-			}
-			catch(TaskCanceledException)
-			{
+			Log.Info("cancel task");
+			if ( FinderTask != null )
+				FinderTask.Cancel = true;
 
-			}
 
 			if ( SearchBar.Text == "" )
-				BeatSaver.GetLatestMaps( out FinderTask, MapsFound );
+				FinderTask = BeatSaver.GetLatestMaps( MapsFound );
 			else
-				BeatSaver.SearchMaps( out FinderTask, MapsFound, 0, SearchBar.Text );
+				FinderTask = BeatSaver.SearchMaps( MapsFound, 0, SearchBar.Text );
 		}
 
 		public void MapsFound( MapDetail[] maps )
@@ -119,7 +113,7 @@ namespace BeatSaber
 		Label Text;
 		IconPanel PlayIcon;
 
-		Sandbox.Internal.Http downloadTask = null;
+		BeatSaver.RequestInfo downloadTask = null;
 
 		public DownloadButton()
 		{
@@ -153,6 +147,9 @@ namespace BeatSaber
 			if ( Parent.Parent.Parent is not DownloadPanel download )
 				return;
 
+			if ( downloadTask != null && downloadTask.Complete )
+				return;
+
 			Download( download.Map );
 
 			e.StopPropagation();
@@ -163,7 +160,17 @@ namespace BeatSaber
 			if ( downloadTask != null )
 				return;
 
-			BeatSaver.DownloadMap( out downloadTask, map );
+			downloadTask = BeatSaver.DownloadMap( map );
+		}
+
+		public override void Tick()
+		{
+			base.Tick();
+
+			if( downloadTask != null )
+			{
+				Text.Text = downloadTask.Complete ? "Complete" : (downloadTask.Progress * 100.0f).ToString() + "%";
+			}
 		}
 	}
 }

@@ -18,19 +18,34 @@ namespace BeatSaber
 			public MapDetail[] Maps { get; set; }
 		}
 
-		public static void GetLatestMaps( out Sandbox.Internal.Http task, Action<MapDetail[]> callback )
+
+		// this probably ain't thread safe, but that shit ain't whitelisted so too bad
+		public class RequestInfo
 		{
-			task = new Sandbox.Internal.Http( new Uri( "https://beatsaver.com/api/maps/latest" ) );
+			public bool Cancel = false;
+			public bool Complete = false;
+			public float Progress = 0.0f;
+		}
+
+		public static RequestInfo GetLatestMaps( Action<MapDetail[]> callback )
+		{
+			RequestInfo info = new RequestInfo();
+
+			var task = new Sandbox.Internal.Http( new Uri( "https://beatsaver.com/api/maps/latest" ) );
 
 			var req = task.GetStringAsync();
 			req.ContinueWith(response => {
-				if ( !response.IsCompleted )
+				if ( !response.IsCompleted || info.Cancel )
 					return;
 
 				//Log.Info( "response " + req.Result );
 				var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
 				callback( data.Maps );
+
+				info.Complete = true;
 			} );
+
+			return info;
 		}
 
 		static string BuildQuery(Dictionary<string, string> query)
@@ -52,7 +67,7 @@ namespace BeatSaber
 			return str;
 		}
 
-		public static void SearchMaps( out Sandbox.Internal.Http task, Action<MapDetail[]> callback, int page = 0, string query = "" )
+		public static RequestInfo SearchMaps( Action<MapDetail[]> callback, int page = 0, string query = "" )
 		{
 			string url = "https://beatsaver.com/api/search/text/" + page;
 
@@ -64,26 +79,36 @@ namespace BeatSaber
 			url += BuildQuery( q );
 
 			Log.Info( "sending query " + url );
-			task = new Sandbox.Internal.Http( new Uri( url ) );
+
+			RequestInfo info = new RequestInfo();
+
+			var task = new Sandbox.Internal.Http( new Uri( url ) );
 			var req = task.GetStringAsync();
 			req.ContinueWith( response => {
-				Log.Info("response");
-				if ( !response.IsCompleted )
+				if ( !response.IsCompleted || info.Cancel )
 					return;
+
 				Log.Info( "response was complete for " + url );
 				var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
 				callback( data.Maps );
+
+				info.Complete = true;
 			} );
+
+			return info;
 		}
 
-		public static void DownloadMap( out Sandbox.Internal.Http task, MapDetail map )
+		public static RequestInfo DownloadMap( MapDetail map )
 		{
 			string mapURL = map.Versions[0].DownloadURL;
 			Log.Info( "Downloading map " + mapURL );
 
-			task = new Sandbox.Internal.Http( new Uri( mapURL ) );
+			RequestInfo info = new RequestInfo();
+
+			var task = new Sandbox.Internal.Http( new Uri( mapURL ) );
+
 			task.GetStreamAsync().ContinueWith(response => {
-				if ( !response.IsCompleted )
+				if ( !response.IsCompleted || info.Cancel )
 					return;
 
 				Stream stream = response.Result;
@@ -99,12 +124,16 @@ namespace BeatSaber
 
 				using ( var zip = new ZipArchive(stream, ZipArchiveMode.Read) )
 				{
-					foreach(var entry in zip.Entries)
+					//foreach(var entry in zip.Entries)
+					for( int i = 0; i < zip.Entries.Count; i++ )
 					{
+						var entry = zip.Entries[i];
+
 						using ( var data = entry.Open())
 						using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )
 						{
 							data.CopyTo( o );
+							info.Progress = (float)(i + 1) / zip.Entries.Count;
 							Log.Info("Wrote file " + mapPath + "/" + entry.FullName );
 						}
 					}
@@ -117,7 +146,10 @@ namespace BeatSaber
 					return;
 				game.LoadSongs();
 
+				info.Complete = true;
 			} );
+
+			return info;
 		}
 
 		[ClientCmd]
