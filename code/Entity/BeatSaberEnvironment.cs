@@ -33,6 +33,11 @@ namespace BeatSaber
 		VisualizerBar[] RightBars;
 		VisualizerGrid Grid;
 
+		const int numSpotlights = 10;
+		BPMSpotlight[] Spotlights;
+
+		int BeatsPlayed = 0;
+
 		public BeatSaberEnvironment()
 		{
 			Transmit = TransmitType.Always;
@@ -94,6 +99,20 @@ namespace BeatSaber
 
 			Grid = new VisualizerGrid() { Position = new Vector3(1200.0f, 0.0f, -800.0f), Scale = 10.0f };
 
+			Spotlights = new BPMSpotlight[numSpotlights];
+			for( int i = 0; i < numSpotlights; i++ )
+			{
+				int rowIndex = i % (numSpotlights / 2);
+				bool left = i < numSpotlights / 2;
+
+				BPMSpotlight light = new BPMSpotlight();
+				light.Position = new Vector3( rowIndex * UnitSize * 4.0f + 200.0f, left ? 200.0f : -200.0f, 100.0f );
+				light.Rotation = Rotation.From(180.0f, left ? 90.0f : -90.0f, 0.0f);
+
+				Spotlights[i] = light;
+			}
+
+
 			//foreach ( var data in NoteData )
 			foreach ( var data in Level.Notes )
 			{
@@ -138,6 +157,16 @@ namespace BeatSaber
 				return;
 
 			float beatsPerSecond = Song.BPM / 60.0f;
+			float beatsElapsed = Stream.TimeElapsed * beatsPerSecond;
+
+			if((int)beatsElapsed > BeatsPlayed)
+			{
+				BeatsPlayed = (int)beatsElapsed;
+
+				//BPM pulse
+				foreach ( var light in Spotlights )
+					light.Pulse();
+			}
 
 			//Time.Delta
 			//float moveSpeed
@@ -148,7 +177,7 @@ namespace BeatSaber
 
 			bool newHitThisTick = false;
 
-			float offset = Stream.TimeElapsed * beatsPerSecond * UnitSize;
+			float offset = beatsElapsed * UnitSize;
 			foreach ( var note in ClientNotes )
 			{
 				var data = note.Data;
