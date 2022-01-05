@@ -142,7 +142,7 @@ namespace BeatSaber
 
 		public void PlaySong()
 		{
-			BeatSaberGame.PlaySong( Song.SongName, Difficulty.SelectionIndex );
+			BeatSaberGame.PlaySong( Song.Directory, Difficulty.SelectionIndex );
 		}
 	}
 
