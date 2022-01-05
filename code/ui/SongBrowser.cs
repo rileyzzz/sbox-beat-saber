@@ -30,6 +30,8 @@ namespace BeatSaber
 
 			SongContainer = AddChild<Panel>("container");
 			DetailsPanel = AddChild<DetailsPanel>("detailsPanel");
+
+			Update();
 		}
 
 		public void Update()
@@ -42,12 +44,12 @@ namespace BeatSaber
 			Songs.Clear();
 
 			Log.Info("adding songs");
-			foreach( var song in game.Songs )
+			foreach( var song in game.LocalSongs )
 			{
-				if ( song == null || song.Song.DifficultyBeatmapSets == null || song.Song.DifficultyBeatmapSets.Length == 0 )
+				if ( song == null || song.DifficultyBeatmapSets == null || song.DifficultyBeatmapSets.Length == 0 )
 					continue;
 
-				Log.Info( song.Song.SongName );
+				Log.Info( song.SongName );
 				var panel = SongContainer.AddChild<SongPanel>( "song" );
 				panel.SetSong( song );
 				Songs.Add( panel );

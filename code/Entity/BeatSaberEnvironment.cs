@@ -126,8 +126,8 @@ namespace BeatSaber
 				Spotlights[i] = light;
 			}
 
-			LeftLasers = new LaserCluster() { Position = new Vector3( 1600.0f, 400.0f, -1400.0f ) };
-			RightLasers = new LaserCluster() { Position = new Vector3( 1600.0f, -400.0f, -1400.0f ) };
+			LeftLasers = new LaserCluster() { Position = new Vector3( 2800.0f, 400.0f, -1400.0f ) };
+			RightLasers = new LaserCluster() { Position = new Vector3( 2800.0f, -400.0f, -1400.0f ) };
 
 			//foreach ( var data in NoteData )
 			foreach ( var data in Level.Notes )
@@ -197,9 +197,6 @@ namespace BeatSaber
 				if ( ++ColorCycle >= CycleColors.Length )
 					ColorCycle = 0;
 
-				foreach ( var pillar in Pillars )
-					pillar.RenderColor = CycleColors[ColorCycle];
-
 				LeftLasers.Pulse();
 				RightLasers.Pulse();
 
@@ -248,20 +245,30 @@ namespace BeatSaber
 			if(newHitThisTick)
 				PlaySound("note_hit");
 
+			//we should always have a left window
 			var left_window = Stream.GetVisualizerWindow(0);
 			var right_window = Stream.GetVisualizerWindow(1);
-
-			if( left_window != null )
+			
+			if ( left_window != null )
 				UpdateVisualizerRow( left_window?.GetFFTData1D(), LeftBars );
 
 			if ( right_window != null )
 				UpdateVisualizerRow( right_window?.GetFFTData1D(), RightBars );
 			
-			if ( left_window != null )
+			if(left_window != null)
 			{
 				((MusicStream.VisualizerWindow)left_window).GetFFTData2D( out float[] x, out float[] y );
 
 				Grid.UpdateTexture( x, y );
+
+				float peak = 0.0f;
+				foreach ( var freq in left_window?.Data )
+					peak = Math.Max( peak, Math.Abs( freq ) );
+
+
+				peak *= 2.0f;
+				foreach ( var pillar in Pillars )
+					pillar.RenderColor = (CycleColors[ColorCycle] * peak).WithAlpha( 1.0f );
 			}
 		}
 	}

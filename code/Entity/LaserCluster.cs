@@ -5,7 +5,7 @@ namespace BeatSaber
 {
 	struct FadeTarget
 	{
-		public Color TargetColor = Color.Black;
+		public Color TargetColor = new Color( 0, 0, 0, 0 );
 		public bool Instant = true;
 		public bool Flash = false;
 		public Color FlashReturnColor = Color.White;

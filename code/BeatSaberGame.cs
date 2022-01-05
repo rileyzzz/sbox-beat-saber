@@ -25,9 +25,10 @@ namespace BeatSaber
 	{
 		[Net] public BeatSaberEnvironment Environment { get; set; }
 
-		[Net] public IList<BeatSaberSong.Networked> Songs { get; set; } = new List<BeatSaberSong.Networked>();
+		//[Net] public IList<BeatSaberSong.Networked> Songs { get; set; } = new List<BeatSaberSong.Networked>();
+		public List<BeatSaberSong> LocalSongs { get; set; } = new();
 
-		[Net] public BeatSaberSong.Networked TestSong { get; set; }
+		//[Net] public BeatSaberSong.Networked TestSong { get; set; }
 
 
 		//[Net] public IList<TestData> CoolData { get; set; } = new List<TestData>();
@@ -48,6 +49,11 @@ namespace BeatSaber
 				//container.data.Add( new TestListItem() );
 				//container.data.Add( new TestListItem() );
 				//CoolData.Add( container );
+				
+			}
+
+			if(IsClient)
+			{
 				LoadSongs();
 			}
 
@@ -74,9 +80,12 @@ namespace BeatSaber
 
 		public SongBrowser GetBrowser()
 		{
+			if ( Local.Hud == null )
+				return null;
+
 			foreach ( var child in Local.Hud.Children )
 			{
-				if ( child is SongBrowser browser )
+				if ( child is BeatSaberHUDContainer container && container.CurrentTab is SongBrowser browser )
 					return browser;
 			}
 			return null;
@@ -85,85 +94,88 @@ namespace BeatSaber
 		public override void PostLevelLoaded()
 		{
 			base.PostLevelLoaded();
-
-			//LoadSongs();
+			
+			//if ( IsClient )
+			//	LoadSongs();
 		}
 
-		[ClientRpc]
 		public void RefreshBrowser()
 		{
 			Log.Info( "songs changed" );
 			if ( !IsClient )
 				return;
 
-			GetBrowser().Update();
+			var browser = GetBrowser();
+			if(browser != null) browser.Update();
 		}
 
+		BeatSaberSong LoadSong( string songDir )
+		{
+			var fs = FileSystem.Data;
+
+			string infoPath = songDir + "info.dat";
+			if ( !fs.FileExists( infoPath ) )
+				return null;
+
+			var song = fs.ReadJson<BeatSaberSong>( infoPath );
+
+			song.Directory = songDir;
+			Log.Info( "Loaded " + song.SongName + " (" + song.DifficultyBeatmapSets.Length + " sets)" );
+
+			return song;
+
+			//song.WriteNetworkData();
+
+			//var netData = song.GetNetworked();
+			//netData.WriteNetworkData();
+			//LocalSongs.Add( netData );
+		}
 
 		public void LoadSongs()
 		{
-			Songs = new List<BeatSaberSong.Networked>();
+			LocalSongs = new List<BeatSaberSong>();
 			
 			var fs = FileSystem.Data;
 
 			if ( !fs.DirectoryExists( "levels" ) )
 				fs.CreateDirectory("levels");
 
+			if ( !fs.DirectoryExists( "download" ) )
+				fs.CreateDirectory( "download" );
+
 			foreach ( var dir in fs.FindDirectory( "levels" ) )
 			{
 				string songDir = "levels/" + dir + "/";
-				string infoPath = songDir + "info.dat";
-				if ( !fs.FileExists( infoPath ) )
-					continue;
-
-				var song = fs.ReadJson<BeatSaberSong>( infoPath );
-
-				song.Directory = songDir;
-				Log.Info("Loaded " + song.SongName + " " + song.DifficultyBeatmapSets.Length + " sets");
-				//song.WriteNetworkData();
-
-				var netData = song.GetNetworked();
-				netData.WriteNetworkData();
-				Songs.Add( netData );
+				var song = LoadSong( songDir );
+				if(song != null) LocalSongs.Add( song );
 			}
 
-			//TestSong = Songs[0];
-
-			////TestSong = new BeatSaberSong();
-			//TestSong.Song.DifficultyBeatmapSets.Add(new DifficultyBeatmapSet());
-			//TestSong.Song.DifficultyBeatmapSets.Add(new DifficultyBeatmapSet());
-			//TestSong.WriteNetworkData();
-
-			//var test = fs.ReadJson<TestData>("testdata.json");
-			//var test = new TestData();
-			//test.data.Add(new TestListItem());
-			//test.data.Add(new TestListItem());
-			//test.data.Add(new TestListItem());
-			//fs.WriteJson("testdata2.json", test);
+			foreach ( var dir in fs.FindDirectory( "download" ) )
+			{
+				string songDir = "download/" + dir + "/";
+				var song = LoadSong( songDir );
+				if ( song != null ) LocalSongs.Add( song );
+			}
 
 			RefreshBrowser();
 		}
 
-		BeatSaberSong.Networked FindSong(string name)
-		{
-			foreach(var song in Songs)
-			{
-				if ( song.Song.SongName == name )
-					return song;
-			}
-			return null;
-		}
-
 		[ServerCmd]
-		public static void PlaySong( string song, int difficulty )
+		public static void PlaySong( string songDir, int difficulty )
 		{
 			if ( Game.Current is not BeatSaberGame game )
 				return;
 
-			var Song = game.FindSong( song );
-			if ( Song == null )
+			Client songOwner = ConsoleSystem.Caller;
+
+			//only allow the host to play songs
+			if ( !songOwner.IsListenServerHost )
 				return;
 
+			//load the song on the server and make sure it's networked to all clients
+			var Song = game.LoadSong( songDir );
+			var netData = Song.GetNetworked();
+			netData.WriteNetworkData();
 
 			//Local.Hud.Style.Display = Sandbox.UI.DisplayMode.None;
 
@@ -172,8 +184,8 @@ namespace BeatSaber
 			//Log.Info( "num sets " + Song.Song.DifficultyBeatmapSets.Length );
 			//Log.Info( "difficulty set " + Song.Song.DifficultyBeatmapSets[0].CharacteristicName + " " + Song.Song.DifficultyBeatmapSets[0].DifficultyBeatmaps.Count );
 
-			var difficultyInfo = Song.Song.DifficultyBeatmapSets[0].DifficultyBeatmaps[difficulty];
-			var Level = fs.ReadJson<BeatSaberLevel>(Song.Song.Directory + difficultyInfo.BeatmapFilename);
+			var difficultyInfo = Song.DifficultyBeatmapSets[0].DifficultyBeatmaps[difficulty];
+			var Level = fs.ReadJson<BeatSaberLevel>(Song.Directory + difficultyInfo.BeatmapFilename);
 
 			//process level, make sure stuff is ordered
 			Array.Sort(Level.Notes, (a, b) => { return a.Time.CompareTo(b.Time); });
@@ -183,7 +195,7 @@ namespace BeatSaber
 			var netLevel = Level.GetNetworked();
 			netLevel.WriteNetworkData();
 
-			game.Environment.Start( Song, difficulty, netLevel );
+			game.Environment.Start( netData, difficulty, netLevel );
 		}
 
 		public override void ClientJoined(Client client)
@@ -195,7 +207,7 @@ namespace BeatSaber
 
 			player.Respawn();
 
-			RefreshBrowser( To.Single(client) );
+			//RefreshBrowser( To.Single(client) );
 			//Players.Add(player);
 		}
 
@@ -227,11 +239,11 @@ namespace BeatSaber
 			if ( Game.Current is not BeatSaberGame game )
 				return;
 
-			Log.Info( "songs:" );
+			//Log.Info( "songs:" );
 			//foreach ( var song in game.Songs )
 			//	Log.Info( "\t" + song.SongName + " (" + song.DifficultyBeatmapSets.Count + " sets)" );
 
-			Log.Info( "test song " + game.TestSong.Song.SongName + " (" + game.TestSong.Song.DifficultyBeatmapSets.Length + " sets)" );
+			//Log.Info( "test song " + game.TestSong.Song.SongName + " (" + game.TestSong.Song.DifficultyBeatmapSets.Length + " sets)" );
 		}
 
 		[ClientCmd]
@@ -240,11 +252,11 @@ namespace BeatSaber
 			if ( Game.Current is not BeatSaberGame game )
 				return;
 
-			Log.Info("songs:");
+			//Log.Info("songs:");
 			//foreach ( var song in game.Songs )
 			//	Log.Info( "\t" + song.SongName + " (" + song.DifficultyBeatmapSets.Count + " sets)" );
 
-			Log.Info( "test song " + game.TestSong.Song.SongName + " (" + game.TestSong.Song.DifficultyBeatmapSets.Length + " sets)" );
+			//Log.Info( "test song " + game.TestSong.Song.SongName + " (" + game.TestSong.Song.DifficultyBeatmapSets.Length + " sets)" );
 		}
 
 		//[ServerCmd]
