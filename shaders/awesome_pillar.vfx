@@ -69,10 +69,15 @@ PS
     CreateInputTexture2D( OverlayTexture, Linear, 8, "", "", "Pillar,10/1", Default3( 1.0, 1.0, 1.0 ) );
     CreateTexture2D( g_tOverlayTexture ) < Channel( RGB, Box( OverlayTexture ), Linear ); OutputFormat( DXT1 ); SrgbRead( false ); >;
 
-    float g_flOverlaySpeed < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/2" ); >;
-    float g_flOverlayScale < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/3" ); >;
-    float g_flOverlayStrength < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/4" ); >;
-    float4 g_vOverlayColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Pillar,10/5" ); >;
+    CreateInputTexture2D( BaseTexture, Linear, 8, "", "", "Pillar,10/2", Default3( 1.0, 1.0, 1.0 ) );
+    CreateTexture2D( g_tBaseTexture ) < Channel( RGB, Box( BaseTexture ), Linear ); OutputFormat( DXT1 ); SrgbRead( false ); >;
+
+    float g_flOverlaySpeed < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/3" ); >;
+    float g_flOverlayScale < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/4" ); >;
+    float g_flOverlayStrength < Default( 1.0f ); Range(0.0f, 64.0f); UiGroup( "Pillar,10/5" ); >;
+    float g_flOverlayStartHeight < Default( 1.0f ); Range(0.0f, 2048.0f); UiGroup( "Pillar,10/6" ); >;
+    float g_flOverlayEndHeight < Default( 1.0f ); Range(0.0f, 2048.0f); UiGroup( "Pillar,10/7" ); >;
+    float4 g_vOverlayColor < UiType( Color ); Default4( 1.0f, 0.0f, 0.0f, 1.0f ); UiGroup( "Pillar,10/8" ); >;
 
 	PS_OUTPUT MainPs( PixelInput input )
 	{
@@ -80,7 +85,10 @@ PS
 
         float3 wsPos = input.vPositionWithOffsetWs - g_vWorldToCameraOffset.xyz;
 
-        m.Emission = Tex2D( g_tOverlayTexture, float2(input.vTextureCoords.x, wsPos.z) * g_flOverlayScale - float2(0.0f, g_flTime * g_flOverlaySpeed) ).r * g_vOverlayColor * input.vVertexColor.rgb * g_flOverlayStrength;
+        float amount = Tex2D( g_tOverlayTexture, float2(input.vTextureCoords.x, wsPos.z) * g_flOverlayScale - float2(0.0f, g_flTime * g_flOverlaySpeed) ).r;
+        amount += Tex2D( g_tBaseTexture, input.vTextureCoords ).r;
+
+        m.Emission = amount * g_vOverlayColor * input.vVertexColor.rgb * g_flOverlayStrength * smoothstep(g_flOverlayStartHeight, g_flOverlayEndHeight, wsPos.z);
 
         return FinalizePixelMaterial( input, m );
 	}

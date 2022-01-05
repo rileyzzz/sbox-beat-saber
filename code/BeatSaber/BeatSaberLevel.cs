@@ -349,7 +349,7 @@ namespace BeatSaber
 					Level.Obstacles[i] = BeatSaberObstacle.Read( ref read );
 
 				Level.Events = new BeatSaberEvent[ read.Read<int>() ];
-				for ( int i = 0; i < Level.Obstacles.Length; i++ )
+				for ( int i = 0; i < Level.Events.Length; i++ )
 					Level.Events[i] = BeatSaberEvent.Read( ref read );
 			}
 		}
@@ -507,11 +507,24 @@ namespace BeatSaber
 		Misc1
 	}
 
+	public enum LightEventType
+	{
+		Off,
+		Blue,
+		BlueFlash,
+		BlueFlashFadeToBlack,
+		FadeToBlue,
+		Red,
+		RedFlash,
+		RedFlashFadeToBlack,
+		FadeToRed
+	}
+
 	public class BeatSaberEvent : /*BaseNetworkable,*/ BeatSaberObject
 	{
 		//[Net]
 		[JsonPropertyName( "_time" )]
-		public float Time { get; set; }
+		public float Time { get; set; } = 0.0f;
 
 		//[Net]
 		[JsonPropertyName( "_type" )]

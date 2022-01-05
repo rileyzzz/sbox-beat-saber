@@ -38,7 +38,11 @@ namespace BeatSaber
 
 		List<AwesomePillar> Pillars = new();
 
+		LaserCluster LeftLasers;
+		LaserCluster RightLasers;
+
 		int BeatsPlayed = 0;
+		int CurrentEvent = 0;
 
 		int ColorCycle = 0;
 		Color[] CycleColors = new Color[] {
@@ -122,6 +126,8 @@ namespace BeatSaber
 				Spotlights[i] = light;
 			}
 
+			LeftLasers = new LaserCluster() { Position = new Vector3( 1600.0f, 400.0f, -1400.0f ) };
+			RightLasers = new LaserCluster() { Position = new Vector3( 1600.0f, -400.0f, -1400.0f ) };
 
 			//foreach ( var data in NoteData )
 			foreach ( var data in Level.Notes )
@@ -188,11 +194,30 @@ namespace BeatSaber
 
 				Color pillarColor = Color.Random;
 
-				if ( ColorCycle++ >= CycleColors.Length )
+				if ( ++ColorCycle >= CycleColors.Length )
 					ColorCycle = 0;
 
 				foreach ( var pillar in Pillars )
 					pillar.RenderColor = CycleColors[ColorCycle];
+
+				LeftLasers.Pulse();
+				RightLasers.Pulse();
+
+			}
+
+			while( CurrentEvent < Level.Events.Length && Level.Events[CurrentEvent].Time <= beatsElapsed )
+			{
+				Log.Info( "playing event " + (CurrentEvent + 1) + "/" + Level.Events.Length );
+				var evt = Level.Events[CurrentEvent++];
+
+				switch ( evt.Type )
+				{
+					case EventType.LeftRotatingLasers: LeftLasers.Event( (LightEventType)evt.Value ); break;
+					case EventType.RightRotatingLasers: RightLasers.Event( (LightEventType)evt.Value ); break;
+					case EventType.LeftRotatingLaserSpeed: LeftLasers.RotationSpeedMultiplier = evt.Value; break;
+					case EventType.RightRotatingLaserSpeed: RightLasers.RotationSpeedMultiplier = evt.Value; break;
+					default: break;
+				}
 			}
 
 			//Time.Delta

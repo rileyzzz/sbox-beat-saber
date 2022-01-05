@@ -1,0 +1,91 @@
+//=========================================================================================================================
+// Optional
+//=========================================================================================================================
+HEADER
+{
+	CompileTargets = ( IS_SM_50 && ( PC || VULKAN ) );
+	Description = "awesome laser";
+
+	DevShader = true;
+}
+
+FEATURES
+{
+    #include "common/features.hlsl"
+}
+
+MODES
+{
+    VrForward();													// Indicates this shader will be used for main rendering
+    //Depth( "vr_depth_only.vfx" ); 									// Shader that will be used for shadowing and depth prepass
+    ToolsVis( S_MODE_TOOLS_VIS ); 									// Ability to see in the editor
+    ToolsWireframe( "vr_tools_wireframe.vfx" ); 					// Allows for mat_wireframe to work
+	ToolsShadingComplexity( "vr_tools_shading_complexity.vfx" ); 	// Shows how expensive drawing is in debug view
+}
+
+//=========================================================================================================================
+COMMON
+{
+	#include "common/shared.hlsl"
+}
+
+//=========================================================================================================================
+
+struct VertexInput
+{
+	#include "common/vertexinput.hlsl"
+};
+
+//=========================================================================================================================
+
+struct PixelInput
+{
+	#include "common/pixelinput.hlsl"
+};
+
+//=========================================================================================================================
+
+VS
+{
+	#include "common/vertex.hlsl"
+
+	PixelInput MainVs( INSTANCED_SHADER_PARAMS( VS_INPUT i ) )
+	{
+		PixelInput o = ProcessVertex( i );
+		// Add your vertex manipulation functions here
+
+		return FinalizeVertex( o );
+	}
+}
+
+//=========================================================================================================================
+
+PS
+{
+    //#include "common/pixel.hlsl"
+
+	struct PS_OUTPUT
+	{
+		float4 vColor : SV_Target0;
+		// float depth : SV_Depth;
+	};
+
+    float g_flEmissionStrength < Default( 1.0f ); UiGroup( "Laser,10/1" ); >;
+
+	PS_OUTPUT MainPs( PixelInput input )
+	{
+        PS_OUTPUT o;
+        
+        if(input.vVertexColor.a < 0.9)
+            discard;
+        
+        o.vColor = float4(g_flEmissionStrength * input.vVertexColor.rgb, 1.0f);
+
+        //Material m = GatherMaterial( input );
+        //m.Emission = g_flEmissionStrength * input.vVertexColor.rgb;
+
+        //return FinalizePixelMaterial( input, m );
+
+        return o;
+	}
+}

@@ -174,6 +174,12 @@ namespace BeatSaber
 
 			var difficultyInfo = Song.Song.DifficultyBeatmapSets[0].DifficultyBeatmaps[difficulty];
 			var Level = fs.ReadJson<BeatSaberLevel>(Song.Song.Directory + difficultyInfo.BeatmapFilename);
+
+			//process level, make sure stuff is ordered
+			Array.Sort(Level.Notes, (a, b) => { return a.Time.CompareTo(b.Time); });
+			Array.Sort(Level.Obstacles, (a, b) => { return a.Time.CompareTo(b.Time); });
+			Array.Sort(Level.Events, (a, b) => { return a.Time.CompareTo(b.Time); });
+
 			var netLevel = Level.GetNetworked();
 			netLevel.WriteNetworkData();
 
