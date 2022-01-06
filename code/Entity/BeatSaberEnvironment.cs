@@ -226,6 +226,8 @@ namespace BeatSaber
 			float beatsPerSecond = Song.BPM / 60.0f;
 			float beatsElapsed = Stream.TimeElapsed * beatsPerSecond;
 
+			//Log.Info( "Time elapsed " + Stream.TimeElapsed + " samples " + Stream.SamplesElapsed );
+
 			if((int)beatsElapsed > BeatsPlayed)
 			{
 				BeatsPlayed = (int)beatsElapsed;
