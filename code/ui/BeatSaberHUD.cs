@@ -8,7 +8,9 @@ namespace BeatSaber
 	public partial class BeatSaberHUDEntity : Sandbox.HudEntity<RootPanel>
 	{
 		BeatSaberHUDContainer Container;
-
+		
+		VROverlayPanel VRSongList;
+		
 		public BeatSaberHUDEntity()
 		{
 			if ( !IsClient )
@@ -16,8 +18,10 @@ namespace BeatSaber
 
 			RootPanel.StyleSheet.Load( "/ui/HUD.scss" );
 
-
 			Container = RootPanel.AddChild<BeatSaberHUDContainer>( "HUD" );
+
+			VRSongList = new VROverlayPanel( RootPanel );
+			VRSongList.SetTransformAbsolute( new Transform( new Vector3( 10.0f, 0.0f, 0.0f ) ) );
 		}
 	}
 

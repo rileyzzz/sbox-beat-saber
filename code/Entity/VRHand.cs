@@ -33,7 +33,7 @@ namespace BeatSaber
 			Saber = Create<Lightsaber>();
 			Saber.Parent = this;
 			Saber.Blade.Red = IsLeft;
-
+			
 			//Saber = new Lightsaber();
 			//Saber.Parent = this;
 			//Saber.Red = IsLeft;

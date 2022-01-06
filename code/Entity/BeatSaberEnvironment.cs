@@ -26,7 +26,7 @@ namespace BeatSaber
 
 		bool Playing = false;
 
-		List<Note> ClientNotes = new();
+		List<Note> ActiveNotes = new();
 
 		const int numVisualizerBars = 256;
 		VisualizerBar[] LeftBars;
@@ -42,6 +42,8 @@ namespace BeatSaber
 		LaserCluster RightLasers;
 
 		int BeatsPlayed = 0;
+
+		int CurrentNote = 0;
 		int CurrentEvent = 0;
 
 		int ColorCycle = 0;
@@ -90,6 +92,15 @@ namespace BeatSaber
 			GenerateMap();
 		}
 
+		void SongFinished()
+		{
+			if ( !Playing )
+				return;
+			Playing = false;
+
+			Local.Hud.Style.Display = Sandbox.UI.DisplayMode.Flex;
+		}
+
 		void GenerateMap()
 		{
 			//clientside atm
@@ -130,14 +141,14 @@ namespace BeatSaber
 			RightLasers = new LaserCluster() { Position = new Vector3( 2800.0f, -400.0f, -1400.0f ) };
 
 			//foreach ( var data in NoteData )
-			foreach ( var data in Level.Notes )
-			{
-				var ent = Create<Note>();
-				ent.Data = data;
+			//foreach ( var data in Level.Notes )
+			//{
+			//	var ent = Create<Note>();
+			//	ent.Data = data;
 
-				ent.Position = new Vector3( data.Time * UnitSize, data.LineIndex * UnitSize - (3 * UnitSize / 2.0f), data.LineLayer * UnitSize + UnitSize / 2.0f );
-				ClientNotes.Add(ent);
-			}
+			//	ent.Position = new Vector3( data.Time * UnitSize, data.LineIndex * UnitSize - (3 * UnitSize / 2.0f), data.LineLayer * UnitSize + UnitSize / 2.0f );
+			//	ClientNotes.Add(ent);
+			//}
 
 			Pillars.Clear();
 			foreach( var entity in Entity.All )
@@ -174,12 +185,22 @@ namespace BeatSaber
 			}
 		}
 
+		float Lerp( float a, float b, float f )
+		{
+			return a + f * (b - a);
+		}
 
 		[Event.Tick]
 		void Tick()
 		{
 			if ( !IsClient || !Playing )
 				return;
+
+			if ( Stream.Finished )
+			{
+				SongFinished();
+				return;
+			}
 
 			float beatsPerSecond = Song.BPM / 60.0f;
 			float beatsElapsed = Stream.TimeElapsed * beatsPerSecond;
@@ -217,6 +238,35 @@ namespace BeatSaber
 				}
 			}
 
+			// number of beats the user has to hit the note
+			const float NotePlayableWindow = 4.0f;
+
+			// amount of time between note 'incoming' and when it becomes playable
+			//const float NoteIncomingWindow = 1.0f;
+			// animation time (seconds) * BPS
+			float NoteIncomingWindow = (20.0f / 10.0f) * beatsPerSecond;
+
+			// number of beats the note lingers
+			const float LateSliceWindow = 1.0f;
+
+			// note speedup without sacrificing BPM
+			const float NoteSpeed = 2.0f;
+
+			// how far away should notes come from
+			const float IncomingNoteDistance = 400.0f;
+
+			while( CurrentNote < Level.Notes.Length && Level.Notes[CurrentNote].Time - beatsElapsed <= NotePlayableWindow + NoteIncomingWindow )
+			{
+				var note = Level.Notes[CurrentNote++];
+
+				var ent = Create<Note>();
+				ent.Data = note;
+
+				ent.Position = new Vector3( NotePlayableWindow * UnitSize * NoteSpeed, note.LineIndex * UnitSize - (3 * UnitSize / 2.0f), note.LineLayer * UnitSize + UnitSize / 2.0f );
+				//ent.Position = new Vector3( IncomingNoteDistance, note.LineIndex * UnitSize - (3 * UnitSize / 2.0f), note.LineLayer * UnitSize + UnitSize / 2.0f );
+				ActiveNotes.Add( ent );
+			}
+
 			//Time.Delta
 			//float moveSpeed
 			//foreach (var note in ClientNotes)
@@ -227,14 +277,35 @@ namespace BeatSaber
 			bool newHitThisTick = false;
 			bool newMissThisTick = false;
 
-			float offset = beatsElapsed * UnitSize;
-			foreach ( var note in ClientNotes )
+			//stale notes that need to be removed
+			List<Note> RemoveNotes = new();
+
+			foreach ( var note in ActiveNotes )
 			{
 				var data = note.Data;
-				float noteTime = data.Time * UnitSize - offset;
-				note.Position = note.Position.WithX( noteTime );
+				float noteTime = data.Time - beatsElapsed;
 
-				if(noteTime <= 0 && !note.SoundPlayed)
+				Vector3 oldPosition = note.Position;
+
+				// if we're in the playable window or later, set position as normal
+				if ( noteTime <= NotePlayableWindow )
+				{
+					float targetPosition = noteTime * UnitSize * NoteSpeed;
+					note.Position = note.Position.WithX( noteTime * UnitSize * NoteSpeed );
+
+				}
+				//else
+				//{
+				//	// otherwise, we're incoming
+				//	float incomingTime = 1.0f - (noteTime - NotePlayableWindow);
+				//	float targetPosition = Lerp( IncomingNoteDistance, NotePlayableWindow * UnitSize * NoteSpeed, incomingTime );
+				//	note.Position = note.Position.WithX( targetPosition );
+				//}
+
+				//for jigglebones
+				//note.Velocity = note.Position - oldPosition;
+
+				if ( noteTime <= 0 && !note.SoundPlayed )
 				{
 					note.SoundPlayed = true;
 
@@ -242,12 +313,19 @@ namespace BeatSaber
 						newHitThisTick = true;
 					else
 						newMissThisTick = true;
-
-					//note.Slice();
 				}
+
+				if( noteTime <= -LateSliceWindow)
+					RemoveNotes.Add( note );
 			}
 
-			if(newHitThisTick)
+			foreach(var note in RemoveNotes)
+			{
+				note.Delete();
+				ActiveNotes.Remove( note );
+			}
+
+			if (newHitThisTick)
 				PlaySound("note_hit");
 
 			//we should always have a left window

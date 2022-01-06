@@ -147,7 +147,6 @@ namespace BeatSaber
 			SetupPhysicsFromModel( PhysicsMotionType.Static );
 			CollisionGroup = CollisionGroup.Trigger;
 
-
 			const float lightDist = 1.0f / numBladeLights;
 
 			for ( int i = 0; i < numBladeLights; i++ )

@@ -223,6 +223,8 @@ public class MusicStream
 	public int SamplesElapsed => (int)(reader.TotalSamples * (sbox_samplerate / (float)reader.SampleRate) - stream.QueuedSampleCount);
 	public float TimeElapsed => (float)SamplesElapsed / sbox_samplerate;
 
+	public bool Finished => stream.QueuedSampleCount <= 0;
+
 	//unresampled
 	public float OriginalSamplesElapsed => (reader.TotalSamples - stream.QueuedSampleCount * ((float)reader.SampleRate / sbox_samplerate));
 

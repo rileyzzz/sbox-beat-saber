@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace BeatSaber
 {
-	public partial class Note : ModelEntity
+	//public partial class Note : ModelEntity
+	public partial class Note : AnimEntity
 	{
 		static readonly Model BlockModel = Model.Load( "models/block.vmdl" );
 
@@ -51,12 +52,22 @@ namespace BeatSaber
 			return Rotation.From( 0.0f, 180.0f, GetDirectionAngle( Data.Direction ) ).Down;
 		}
 
+		protected override void OnSequenceFinished( bool looped )
+		{
+			base.OnSequenceFinished( looped );
+
+
+		}
+
 		void Update()
 		{
 			if(Data.Type == NoteType.Red || Data.Type == NoteType.Blue)
 			{
 				SetModel( BlockModel );
 				SetupPhysicsFromModel( PhysicsMotionType.Static );
+				CurrentSequence.Name = "enter_anim";
+
+				//SetupPhysicsFromModel( PhysicsMotionType.Dynamic );
 
 				//this causes a crash for whatever reason
 				//CollisionGroup = CollisionGroup.Trigger;

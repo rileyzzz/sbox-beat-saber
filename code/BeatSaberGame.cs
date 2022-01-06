@@ -1,4 +1,5 @@
 using Sandbox;
+using Sandbox.UI;
 using Sandbox.UI.Construct;
 using System;
 using System.Collections.Generic;
@@ -52,12 +53,33 @@ namespace BeatSaber
 				
 			}
 
-			if(IsClient)
+			if( IsClient )
 			{
 				LoadSongs();
+
+				//var VRSongList = new WorldPanel();
+				//VRSongList.StyleSheet.Load( "/ui/HUD.scss" );
+
+				//VRSongList.Position = new Vector3( 0.0f, 0.0f, 30.0f );
+				//VRSongList.Rotation = Rotation.FromYaw( 180.0f );
+
+				//VRSongList.SceneObject.Flags.IsTranslucent = false;
+				//VRSongList.SceneObject.Flags.IsOpaque = true;
+
+				
+				//VRSongList.Position = new Vector3( 0.0f, 0.0f, 30.0f );
+				//VRSongList.Rotation = Rotation.FromYaw( 180.0f );
+
+				//VRSongList.SceneObject.Flags.IsTranslucent = false;
+				//VRSongList.SceneObject.Flags.IsOpaque = true;
+				
+				////VRSongList.WorldScale = 2.0f;
+
+				//VRSongList.AddChild<SongBrowser>( "browser" );
+
 			}
 
-			//Global.PhysicsSubSteps = 8;
+			Global.PhysicsSubSteps = 8;
 		}
 
 		//[ServerCmd]
@@ -94,7 +116,7 @@ namespace BeatSaber
 		public override void PostLevelLoaded()
 		{
 			base.PostLevelLoaded();
-			
+
 			//if ( IsClient )
 			//	LoadSongs();
 		}
