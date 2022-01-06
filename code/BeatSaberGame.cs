@@ -57,7 +57,7 @@ namespace BeatSaber
 				LoadSongs();
 			}
 
-			Global.PhysicsSubSteps = 8;
+			//Global.PhysicsSubSteps = 8;
 		}
 
 		//[ServerCmd]
@@ -207,6 +207,7 @@ namespace BeatSaber
 
 			player.Respawn();
 
+			player.Position = new Vector3( -25.0f, 0.0f, 0.0f );
 			//RefreshBrowser( To.Single(client) );
 			//Players.Add(player);
 		}

@@ -86,7 +86,7 @@ namespace Utils
 		int GetOrCreateIndex(Vertex v)
 		{
 			// set our third texcoord to the plane
-			v.TexCoord2 = new Vector4(slicePlane.Normal, slicePlane.Distance);
+			v.TexCoord2 = new Vector4(slicePlane.Normal, -slicePlane.Distance);
 			//Log.Info( "normal " + slicePlane.Normal + " distance " + slicePlane.Distance );
 			//v.TexCoord2 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f);
 
@@ -102,6 +102,9 @@ namespace Utils
 
 		public Mesh ToMesh(Material material)
 		{
+			if ( Vertices.Count == 0 || Indices.Count == 0 )
+				return null;
+
 			var mesh = new Mesh(material);
 
 			mesh.CreateVertexBuffer(Vertices.Count, Vertex.Layout, Vertices);

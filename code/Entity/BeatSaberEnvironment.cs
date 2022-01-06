@@ -9,7 +9,7 @@ namespace BeatSaber
 	public partial class BeatSaberEnvironment : Entity
 	{
 		//size of a grid unit
-		public static float UnitSize = 20.0f;
+		public static float UnitSize = 25.0f;
 
 		//Network data
 		[Net] BeatSaberSong.Networked _netSong { get; set; }
@@ -204,7 +204,7 @@ namespace BeatSaber
 
 			while( CurrentEvent < Level.Events.Length && Level.Events[CurrentEvent].Time <= beatsElapsed )
 			{
-				Log.Info( "playing event " + (CurrentEvent + 1) + "/" + Level.Events.Length );
+				//Log.Info( "playing event " + (CurrentEvent + 1) + "/" + Level.Events.Length );
 				var evt = Level.Events[CurrentEvent++];
 
 				switch ( evt.Type )
@@ -225,6 +225,7 @@ namespace BeatSaber
 			//}
 
 			bool newHitThisTick = false;
+			bool newMissThisTick = false;
 
 			float offset = beatsElapsed * UnitSize;
 			foreach ( var note in ClientNotes )
@@ -236,9 +237,13 @@ namespace BeatSaber
 				if(noteTime <= 0 && !note.SoundPlayed)
 				{
 					note.SoundPlayed = true;
-					newHitThisTick = true;
 
-					note.Slice();
+					if ( note.Hit )
+						newHitThisTick = true;
+					else
+						newMissThisTick = true;
+
+					//note.Slice();
 				}
 			}
 

@@ -17,6 +17,9 @@ public class MusicStream
 	{
 		public float[] Data;
 
+		bool fft_cached = false;
+		float[] fft_data = null;
+
 		//public VisualizerWindow(Complex[] data)
 		//{
 		//	Data = new float[data.Length];
@@ -39,6 +42,9 @@ public class MusicStream
 
 		public float[] GetFFTData1D()
 		{
+			if ( fft_cached )
+				return fft_data;
+
 			Complex[] transformData = new Complex[Data.Length];
 			for ( int i = 0; i < Data.Length; i++ )
 				transformData[i] = new Complex( (double)Data[i], 0.0 );
@@ -52,6 +58,9 @@ public class MusicStream
 				var im = transformData[i].Im;
 				outData[i] = (float)Math.Abs( im );
 			}
+
+			fft_data = outData;
+			fft_cached = true;
 
 			return outData;
 		}

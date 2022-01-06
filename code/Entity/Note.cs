@@ -20,7 +20,7 @@ namespace BeatSaber
 			}
 		}
 
-		public bool Hit { get; set; } = true;
+		public bool Hit { get; set; } = false;
 		public bool SoundPlayed { get; set; } = false;
 
 		public Note()
@@ -56,6 +56,11 @@ namespace BeatSaber
 			if(Data.Type == NoteType.Red || Data.Type == NoteType.Blue)
 			{
 				SetModel( BlockModel );
+				SetupPhysicsFromModel( PhysicsMotionType.Static );
+
+				//this causes a crash for whatever reason
+				//CollisionGroup = CollisionGroup.Trigger;
+
 				Rotation = Rotation.From( 0.0f, 180.0f, GetDirectionAngle(Data.Direction) );
 
 				bool red = Data.Type == NoteType.Red;
@@ -75,7 +80,7 @@ namespace BeatSaber
 
 		}
 
-		void CreateGib( string name, Mesh mesh, Vector3[] vertices )
+		void CreateGib( string name, Mesh mesh, Vector3[] vertices, Vector3 velocity )
 		{
 			var gib = new PropGib
 			{
@@ -89,7 +94,8 @@ namespace BeatSaber
 			gib.SetModel( Model.Builder.AddMesh( mesh ).AddCollisionHull(vertices).Create() );
 			gib.SetInteractsAs( CollisionLayer.Debris );
 
-			gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
+			//gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
+			gib.Velocity = velocity.Normal * 300.0f;
 
 			_ = FadeAsync( gib, 0.2f );
 		}
@@ -118,16 +124,40 @@ namespace BeatSaber
 
 		static readonly Material sliceMaterial = Material.Load( "materials/block/block.vmat" );
 
-		public void Slice()
+		public void Slice( Vector3 origin, Vector3 normal, Vector3 velocity, bool red )
 		{
-			Plane testPlane = new Plane(new Vector3(), Vector3.Random.Normal);
-			
-			Utils.ModelSlicer.SliceModel( BlockModel, sliceMaterial, testPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+			Hit = true;
+
+			Plane cutPlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
+
+			//DebugDrawPlane( cutPlane );
+
+			Utils.ModelSlicer.SliceModel( BlockModel, sliceMaterial, cutPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
 			SetModel( "" );
+			EnableAllCollisions = false;
 
-			CreateGib( "front", FrontMesh, FrontVertices );
-			CreateGib( "back", BackMesh, BackVertices );
+			if( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, velocity );
+			if( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, velocity );
 		}
+
+		//void DebugDrawPlane(Plane plane)
+		//{
+		//	Vector3 up = Vector3.Cross(plane.Normal, new Vector3(0.0f, 1.0f, 0.0f)).Normal;
+		//	Vector3 right = Vector3.Cross(plane.Normal, up).Normal;
+
+		//	int gridSize = 8;
+
+		//	float gridScale = 10.0f;
+
+		//	up *= gridScale;
+		//	right *= gridScale;
+
+		//	for ( int x = -gridSize; x <= gridSize; x++ )
+		//		DebugOverlay.Line( plane.Origin + right * x - up * gridSize, plane.Origin + right * x + up * gridSize, Color.Green, 100.0f );
+
+		//	for ( int y = -gridSize; y <= gridSize; y++ )
+		//		DebugOverlay.Line( plane.Origin + up * y - right * gridSize, plane.Origin + up * y + right * gridSize, Color.Green, 100.0f );
+		//}
 	}
 }

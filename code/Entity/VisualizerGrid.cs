@@ -23,7 +23,8 @@ namespace BeatSaber
 			SetModel( GridModel );
 
 			//DataTexture = Texture.Create( MusicStream.ChannelBufferSize, MusicStream.ChannelBufferSize, ImageFormat.R32F ).WithDynamicUsage().Finish();
-			DataTexture = Texture.Create( 256, 256, ImageFormat.R32F ).WithDynamicUsage().Finish();
+			//DataTexture = Texture.Create( 256, 256, ImageFormat.R32F ).WithDynamicUsage().Finish();
+			DataTexture = Texture.Create( 128, 128, ImageFormat.R32F ).WithDynamicUsage().Finish();
 
 			//LocalMaterial = GridMaterial.CreateCopy();
 			LocalMaterial = Material.Load( "materials/grid.vmat" );

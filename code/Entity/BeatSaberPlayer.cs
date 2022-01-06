@@ -16,6 +16,16 @@ namespace BeatSaber
 
 		}
 
+
+		public override void ClientSpawn()
+		{
+			base.ClientSpawn();
+
+			Log.Info( "client spawn" );
+
+			//testStream = new MusicStream( "testlevel/Beat It.ogg" );
+		}
+
 		public override void Respawn()
 		{
 			//SetModel( "models/citizen/citizen.vmdl" );
@@ -120,16 +130,6 @@ namespace BeatSaber
 
 		//MusicStream testStream = null;
 		//VisualizerBar[] bars;
-
-		public override void ClientSpawn()
-		{
-			base.ClientSpawn();
-
-			Log.Info( "client spawn" );
-
-			//testStream = new MusicStream( "testlevel/Beat It.ogg" );
-
-		}
 
 		//[ClientCmd]
 		//public static void play_song()
