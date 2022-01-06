@@ -20,8 +20,18 @@ namespace BeatSaber
 
 			Container = RootPanel.AddChild<BeatSaberHUDContainer>( "HUD" );
 
-			VRSongList = new VROverlayPanel( RootPanel );
-			VRSongList.SetTransformAbsolute( new Transform( new Vector3( 10.0f, 0.0f, 0.0f ) ) );
+
+		}
+
+		public override void ClientSpawn()
+		{
+			base.ClientSpawn();
+
+			if ( Local.Client.IsUsingVr )
+			{
+				VRSongList = new VROverlayPanel( RootPanel );
+				VRSongList.SetTransformAbsolute( new Transform( new Vector3( 10.0f, 0.0f, 0.0f ) ) );
+			}
 		}
 	}
 

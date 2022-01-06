@@ -12,6 +12,8 @@ public class MusicStream
 	//public static readonly int ChannelBufferSize = 512;
 	public static readonly int ChannelBufferSize = 512;
 
+	const bool PregenerateVisualizerData = true;
+
 	//const int channelBufferSize = 4096;
 	public struct VisualizerWindow
 	{
@@ -38,13 +40,13 @@ public class MusicStream
 		public VisualizerWindow( float[] data )
 		{
 			Data = (float[])data.Clone();
+
+			if ( PregenerateVisualizerData )
+				GenerateData();
 		}
 
-		public float[] GetFFTData1D()
+		public void GenerateData()
 		{
-			if ( fft_cached )
-				return fft_data;
-
 			Complex[] transformData = new Complex[Data.Length];
 			for ( int i = 0; i < Data.Length; i++ )
 				transformData[i] = new Complex( (double)Data[i], 0.0 );
@@ -61,8 +63,14 @@ public class MusicStream
 
 			fft_data = outData;
 			fft_cached = true;
+		}
 
-			return outData;
+		public float[] GetFFTData1D()
+		{
+			if ( !fft_cached )
+				GenerateData();
+
+			return fft_data;
 		}
 
 		public void GetFFTData2D(out float[] x, out float[] y)
@@ -144,7 +152,7 @@ public class MusicStream
 
 		sound = Sound.FromScreen( "audiostream.default" );
 		stream = sound.CreateStream( reader.SampleRate, reader.Channels );
-		stream.SetVolume(0.5f);
+		//stream.SetVolume(0.5f);
 		//startTime = Time.Sound;
 
 		//int bufferSize = vorbis.Channels * vorbis.SampleRate / 5; // 200ms
@@ -185,7 +193,7 @@ public class MusicStream
 
 	public void Stop()
 	{
-
+		sound.Stop();
 	}
 
 

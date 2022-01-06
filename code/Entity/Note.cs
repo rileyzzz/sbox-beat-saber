@@ -32,14 +32,14 @@ namespace BeatSaber
 		{
 			switch ( dir )
 			{
-				case CutDirection.Up:			return 0.0f;
-				case CutDirection.Down:			return 180.0f;
-				case CutDirection.Left:			return 90.0f;
-				case CutDirection.Right:		return -90.0f;
-				case CutDirection.UpLeft:		return 45.0f;
-				case CutDirection.UpRight:		return -45.0f;
-				case CutDirection.DownLeft:		return 135.0f;
-				case CutDirection.DownRight:	return -135.0f;
+				case CutDirection.Down:			return 0.0f;
+				case CutDirection.Up:			return 180.0f;
+				case CutDirection.Left:			return -90.0f;
+				case CutDirection.Right:		return 90.0f;
+				case CutDirection.UpLeft:		return -135.0f;
+				case CutDirection.UpRight:		return 135.0f;
+				case CutDirection.DownLeft:		return -45.0f;
+				case CutDirection.DownRight:	return 45.0f;
 				case CutDirection.Any:			return 0.0f;
 			}
 
@@ -47,10 +47,15 @@ namespace BeatSaber
 			return 0.0f;
 		}
 
-		Vector3 GetDirectionVector( CutDirection dir )
+		Rotation GetDirectionRotation( CutDirection dir )
 		{
-			return Rotation.From( 0.0f, 180.0f, GetDirectionAngle( Data.Direction ) ).Down;
+			return Rotation.FromRoll( GetDirectionAngle( Data.Direction ) );
 		}
+
+		//Vector3 GetDirectionVector( CutDirection dir )
+		//{
+		//	return Rotation.From( 0.0f, 180.0f, GetDirectionAngle( Data.Direction ) ).Down;
+		//}
 
 		protected override void OnSequenceFinished( bool looped )
 		{
@@ -72,7 +77,7 @@ namespace BeatSaber
 				//this causes a crash for whatever reason
 				//CollisionGroup = CollisionGroup.Trigger;
 
-				Rotation = Rotation.From( 0.0f, 180.0f, GetDirectionAngle(Data.Direction) );
+				Rotation = Rotation.FromYaw( 180.0f ) * GetDirectionRotation( Data.Direction );
 
 				bool red = Data.Type == NoteType.Red;
 				bool angle = Data.Direction != CutDirection.Any;

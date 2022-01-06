@@ -412,8 +412,8 @@ namespace BeatSaber
 			write.Write( Time );
 			write.Write( LineIndex );
 			write.Write( LineLayer );
-			write.Write( Type );
-			write.Write( Direction );
+			write.Write( (int)Type );
+			write.Write( (int)Direction );
 		}
 
 		public static BeatSaberNote Read( ref NetRead read )
@@ -423,8 +423,8 @@ namespace BeatSaber
 			Note.Time = read.Read<float>();
 			Note.LineIndex = read.Read<int>();
 			Note.LineLayer = read.Read<int>();
-			Note.Type = read.Read<NoteType>();
-			Note.Direction = read.Read<CutDirection>();
+			Note.Type = (NoteType)read.Read<int>();
+			Note.Direction = (CutDirection)read.Read<int>();
 
 			return Note;
 		}
@@ -466,7 +466,7 @@ namespace BeatSaber
 		{
 			write.Write( Time );
 			write.Write( LineIndex );
-			write.Write( Type );
+			write.Write( (int)Type );
 			write.Write( Duration );
 			write.Write( Width );
 		}
@@ -477,7 +477,7 @@ namespace BeatSaber
 
 			Obstacle.Time = read.Read<float>();
 			Obstacle.LineIndex = read.Read<int>();
-			Obstacle.Type = read.Read<ObstacleType>();
+			Obstacle.Type = (ObstacleType)read.Read<int>();
 			Obstacle.Duration = read.Read<float>();
 			Obstacle.Width = read.Read<int>();
 
@@ -545,7 +545,7 @@ namespace BeatSaber
 		public void Write( NetWrite write )
 		{
 			write.Write( Time );
-			write.Write( Type );
+			write.Write( (int)Type );
 			write.Write( Value );
 			write.Write( FloatValue );
 		}
@@ -555,7 +555,7 @@ namespace BeatSaber
 			BeatSaberEvent Event = new();
 
 			Event.Time = read.Read<float>();
-			Event.Type = read.Read<EventType>();
+			Event.Type = (EventType)read.Read<int>();
 			Event.Value = read.Read<int>();
 			Event.FloatValue = read.Read<float>();
 

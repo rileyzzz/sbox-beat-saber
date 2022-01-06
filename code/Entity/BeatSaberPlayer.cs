@@ -36,6 +36,12 @@ namespace BeatSaber
 				Controller = new VRWalkController();
 				Animator = new VRAnimator();
 				Camera = new VRCamera();
+
+				LeftHand?.Delete();
+				RightHand?.Delete();
+
+				LeftHand = new() { Owner = this };
+				RightHand = new() { Owner = this };
 			}
 			else
 			{
@@ -44,11 +50,6 @@ namespace BeatSaber
 				Camera = new FirstPersonCamera();
 			}
 
-			LeftHand?.Delete();
-			RightHand?.Delete();
-
-			LeftHand = new() { Owner = this };
-			RightHand = new() { Owner = this };
 
 			EnableAllCollisions = true;
 			EnableDrawing = true;

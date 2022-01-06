@@ -9,7 +9,7 @@ namespace BeatSaber
 	public partial class BeatSaberEnvironment : Entity
 	{
 		//size of a grid unit
-		public static float UnitSize = 25.0f;
+		public static float UnitSize = 28.0f;
 
 		//Network data
 		[Net] BeatSaberSong.Networked _netSong { get; set; }
@@ -25,6 +25,7 @@ namespace BeatSaber
 		MusicStream Stream;
 
 		bool Playing = false;
+		bool MapGenerated = false;
 
 		List<Note> ActiveNotes = new();
 
@@ -44,6 +45,7 @@ namespace BeatSaber
 		int BeatsPlayed = 0;
 
 		int CurrentNote = 0;
+		int CurrentObstacle = 0;
 		int CurrentEvent = 0;
 
 		int ColorCycle = 0;
@@ -70,6 +72,18 @@ namespace BeatSaber
 			_netSong = song;
 			_netLevel = level;
 			Difficulty = difficulty;
+
+			BeatsPlayed = 0;
+			ColorCycle = 0;
+
+			CurrentNote = 0;
+			CurrentObstacle = 0;
+			CurrentEvent = 0;
+
+			// clear active notes just in case
+			foreach ( var note in ActiveNotes )
+				note.Delete();
+			ActiveNotes.Clear();
 
 			//NoteData = new List<BeatSaberNote>(Level.Notes);
 
@@ -98,14 +112,21 @@ namespace BeatSaber
 				return;
 			Playing = false;
 
+			Log.Info("Song finished.");
+
+			Stream.Stop();
+			Stream = null;
+
 			Local.Hud.Style.Display = Sandbox.UI.DisplayMode.Flex;
 		}
 
 		void GenerateMap()
 		{
 			//clientside atm
-			if ( !IsClient )
+			if ( !IsClient || MapGenerated )
 				return;
+
+			MapGenerated = true;
 
 			LeftBars = new VisualizerBar[numVisualizerBars];
 			RightBars = new VisualizerBar[numVisualizerBars];
@@ -253,7 +274,7 @@ namespace BeatSaber
 			const float NoteSpeed = 2.0f;
 
 			// how far away should notes come from
-			const float IncomingNoteDistance = 400.0f;
+			//const float IncomingNoteDistance = 400.0f;
 
 			while( CurrentNote < Level.Notes.Length && Level.Notes[CurrentNote].Time - beatsElapsed <= NotePlayableWindow + NoteIncomingWindow )
 			{
@@ -262,7 +283,7 @@ namespace BeatSaber
 				var ent = Create<Note>();
 				ent.Data = note;
 
-				ent.Position = new Vector3( NotePlayableWindow * UnitSize * NoteSpeed, note.LineIndex * UnitSize - (3 * UnitSize / 2.0f), note.LineLayer * UnitSize + UnitSize / 2.0f );
+				ent.Position = new Vector3( NotePlayableWindow * UnitSize * NoteSpeed, -(note.LineIndex * UnitSize - (3 * UnitSize / 2.0f)), note.LineLayer * UnitSize + UnitSize / 2.0f );
 				//ent.Position = new Vector3( IncomingNoteDistance, note.LineIndex * UnitSize - (3 * UnitSize / 2.0f), note.LineLayer * UnitSize + UnitSize / 2.0f );
 				ActiveNotes.Add( ent );
 			}
