@@ -12,17 +12,34 @@ namespace BeatSaber
 		[Net, Local] public LeftHand LeftHand { get; set; }
 		[Net, Local] public RightHand RightHand { get; set; }
 
+		VROverlayPanel Overlay;
+
 		public BeatSaberPlayer()
 		{
 
 		}
 
+		
+		// unfortunately i think this might be the only place this can go
+		// for some reason the Client object doesn't exist until super late
+		[ClientRpc]
+		void CreateOverlay()
+		{
+			// and clients don't even know if they're in VR or not????
+			//if ( !Client.IsUsingVr )
+			//	return;
+
+			Overlay = new VROverlayPanel( Local.Hud );
+			Overlay.SetTransformAbsolute( new Transform( new Vector3( 10.0f, 0.0f, 0.0f ) ) );
+		}
 
 		public override void ClientSpawn()
 		{
 			base.ClientSpawn();
 
 			Log.Info( "client spawn" );
+
+
 
 			//testStream = new MusicStream( "testlevel/Beat It.ogg" );
 		}
@@ -42,6 +59,8 @@ namespace BeatSaber
 
 				LeftHand = new() { Owner = this };
 				RightHand = new() { Owner = this };
+
+				CreateOverlay();
 			}
 			else
 			{

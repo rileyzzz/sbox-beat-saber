@@ -32,6 +32,18 @@ namespace Utils
 		}
 	}
 
+	public class CachedModel
+	{
+		public Vertex[] Vertices;
+		public uint[] Indices;
+
+		public CachedModel( Model model )
+		{
+			Vertices = model.GetVertices();
+			Indices = model.GetIndices();
+		}
+	}
+
 	public class SlicedModel
 	{
 		public Plane slicePlane;
@@ -116,10 +128,24 @@ namespace Utils
 
 	public static class ModelSlicer
 	{
-		public static void SliceModel(Model model, Material material, Plane plane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices)
+		//Cache our model data because GetVertices and GetIndices like to crash :)
+		static Dictionary<Model, CachedModel> ModelCache = new();
+
+		static CachedModel GetCachedModel(Model model)
 		{
-			Vertex[] vertices = model.GetVertices();
-			uint[] indices = model.GetIndices();
+			if ( ModelCache.TryGetValue( model, out CachedModel val ) )
+				return val;
+
+			var cached = new CachedModel( model );
+			ModelCache[model] = cached;
+			return cached;
+		}
+
+		public static void SliceModel(Model src_model, Material material, Plane plane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices)
+		{
+			CachedModel model = GetCachedModel(src_model);
+			var vertices = model.Vertices;
+			var indices = model.Indices;
 
 			SlicedModel Front = new( plane );
 			SlicedModel Back = new( plane );

@@ -9,7 +9,7 @@ namespace BeatSaber
 	{
 		BeatSaberHUDContainer Container;
 		
-		VROverlayPanel VRSongList;
+		//VROverlayPanel VRSongList;
 		
 		public BeatSaberHUDEntity()
 		{
@@ -19,19 +19,6 @@ namespace BeatSaber
 			RootPanel.StyleSheet.Load( "/ui/HUD.scss" );
 
 			Container = RootPanel.AddChild<BeatSaberHUDContainer>( "HUD" );
-
-
-		}
-
-		public override void ClientSpawn()
-		{
-			base.ClientSpawn();
-
-			if ( Local.Client.IsUsingVr )
-			{
-				VRSongList = new VROverlayPanel( RootPanel );
-				VRSongList.SetTransformAbsolute( new Transform( new Vector3( 10.0f, 0.0f, 0.0f ) ) );
-			}
 		}
 	}
 

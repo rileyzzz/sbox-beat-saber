@@ -122,19 +122,23 @@ namespace BeatSaber
 
 				fs.CreateDirectory( mapPath );
 
-				using ( var zip = new ZipArchive(stream, ZipArchiveMode.Read) )
+				//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
+				var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
+
+				//using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
 				{
 					//foreach(var entry in zip.Entries)
-					for( int i = 0; i < zip.Entries.Count; i++ )
+					for ( int i = 0; i < zip.Count; i++ )
 					{
-						var entry = zip.Entries[i];
+						//var entry = zip.Entries[i];
+						var entry = zip[i];
 
-						using ( var data = entry.Open())
+						using ( var data = entry.Open() )
 						using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )
 						{
 							data.CopyTo( o );
-							info.Progress = (float)(i + 1) / zip.Entries.Count;
-							Log.Info("Wrote file " + mapPath + "/" + entry.FullName );
+							info.Progress = (float)(i + 1) / zip.Count;
+							Log.Info( "Wrote file " + mapPath + "/" + entry.FullName );
 						}
 					}
 				}
