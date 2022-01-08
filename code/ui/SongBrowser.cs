@@ -91,7 +91,8 @@ namespace BeatSaber
 			Title.Text = song.SongName + " " + song.SongSubName;
 			Author.Text = song.SongAuthorName + "\n" + song.LevelAuthorName;
 
-			Image.SetTexture(Song.Directory + Song.CoverImageFilename);
+			var tex = Texture.Load( FileSystem.Data, Song.Directory + Song.CoverImageFilename );
+			Image.Texture = tex;
 		}
 
 		protected override void OnClick( MousePanelEvent e )

@@ -16,7 +16,7 @@ namespace BeatSaber
 		public const float VerticalOffset = UnitSize / 2.0f;
 
 		// number of beats the user has to hit the note
-		const float NotePlayableWindow = 3.0f;
+		const float NotePlayableWindow = 2.0f;
 
 		// amount of time between note 'incoming' and when it becomes playable
 		//const float NoteIncomingWindow = 1.0f;
