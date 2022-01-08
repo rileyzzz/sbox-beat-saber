@@ -13,7 +13,7 @@ namespace BeatSaber
 
 		//public IPhysicsJoint SaberJoint { get; set; }
 		//[Net] public Lightsaber Saber { get; set; }
-		public Lightsaber Saber { get; set; }
+		[Net] public Lightsaber Saber { get; set; }
 
 		//bool triggerPressed = false;
 
@@ -26,12 +26,29 @@ namespace BeatSaber
 		{
 			base.Spawn();
 
+			SetModel( "models/hand_dummy.vmdl" );
+			SetupPhysicsFromModel( PhysicsMotionType.Static );
+
 			Position = Hand.Transform.Position;
 			Rotation = Hand.Transform.Rotation;
 
-			//Saber = new Lightsaber();
-			Saber = Create<Lightsaber>();
-			Saber.Parent = this;
+			Saber = new Lightsaber() { Owner = this };
+			//Saber = Create<Lightsaber>();
+			//Saber.Parent = this;
+
+			//we want physics to interpolate the motion of the lightsabers separately so notes don't get missed
+			Saber.Position = Hand.Transform.Position;
+			Saber.Rotation = Hand.Transform.Rotation;
+
+			PhysicsJoint.Weld
+				//.From( this, 0 )
+				.From( PhysicsBody, new Vector3() )
+				.To( Saber.PhysicsBody, new Vector3() )
+				.WithBlockSolverEnabled()
+				//.WithLinearSpring( 8.0f, 0.8f, 300.0f )
+				//.WithLinearSpring( 8.0f, 0.8f, 0.0f )
+				.Create();
+
 			Saber.Blade.Red = IsLeft;
 			
 			//Saber = new Lightsaber();

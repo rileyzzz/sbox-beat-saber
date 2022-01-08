@@ -24,6 +24,11 @@ namespace BeatSaber
 		public bool Hit { get; set; } = false;
 		public bool SoundPlayed { get; set; } = false;
 
+		bool GibsCreated = false;
+		Plane SlicePlane;
+		Vector3 SliceVelocity;
+		static readonly Material SliceMaterial = Material.Load( "materials/block/block.vmat" );
+
 		public Note()
 		{
 		}
@@ -68,7 +73,7 @@ namespace BeatSaber
 		{
 			if(Data.Type == NoteType.Red || Data.Type == NoteType.Blue)
 			{
-				SetModel( BlockModel );
+				Model = BlockModel;
 				SetupPhysicsFromModel( PhysicsMotionType.Static );
 				CurrentSequence.Name = "enter_anim";
 
@@ -107,7 +112,7 @@ namespace BeatSaber
 				BreakpieceName = name
 			};
 
-			gib.SetModel( Model.Builder.AddMesh( mesh ).AddCollisionHull(vertices).Create() );
+			gib.Model = Model.Builder.AddMesh( mesh ).AddCollisionHull(vertices).Create();
 			gib.SetInteractsAs( CollisionLayer.Debris );
 
 			//gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
@@ -138,23 +143,32 @@ namespace BeatSaber
 			gib.Delete();
 		}
 
-		static readonly Material sliceMaterial = Material.Load( "materials/block/block.vmat" );
-
 		public void Slice( Vector3 origin, Vector3 normal, Vector3 velocity, bool red )
 		{
 			Hit = true;
 
-			Plane cutPlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
+			SlicePlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
+			SliceVelocity = velocity;
+		}
 
-			//DebugDrawPlane( cutPlane );
+		[Event.Tick]
+		void Tick()
+		{
+			// we can't do this in slice because that happens in the physics thread
+			// creating props there likes to crash the game
+			if(Hit && !GibsCreated)
+			{
+				GibsCreated = true;
 
-			Utils.ModelSlicer.SliceModel( BlockModel, sliceMaterial, cutPlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+				Utils.ModelSlicer.SliceModel( BlockModel, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
-			SetModel( "" );
-			EnableAllCollisions = false;
+				SetModel( "" );
+				EnableAllCollisions = false;
 
-			if( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, velocity );
-			if( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, velocity );
+
+				if ( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, SliceVelocity );
+				if ( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, SliceVelocity );
+			}
 		}
 
 		//void DebugDrawPlane(Plane plane)

@@ -42,9 +42,12 @@ namespace BeatSaber
 		public void CreateMesh()
 		{
 			var unitSize = BeatSaberEnvironment.UnitSize;
+			var verticalOffset = BeatSaberEnvironment.VerticalOffset;
+			// note speed affects the distance between note blocks
+			var noteSpeed = BeatSaberEnvironment.NoteSpeed;
 
-			Vector3 offset = new Vector3( 0.0f, 0.0f, (Data.Type == ObstacleType.FullHeight ? 0 : unitSize) );
-			Vector3 extent = new Vector3( Data.Duration * unitSize, Data.Width * unitSize, (Data.Type == ObstacleType.FullHeight ? 3 : 2) * unitSize );
+			Vector3 offset = new Vector3( 0.0f, 0.0f, (Data.Type == ObstacleType.FullHeight ? 0 : 2 * unitSize) + verticalOffset );
+			Vector3 extent = new Vector3( Data.Duration * unitSize * noteSpeed, -Data.Width * unitSize, (Data.Type == ObstacleType.FullHeight ? 3 : 1) * unitSize );
 			Vector3 origin = extent / 2 + offset;
 
 			var mesh = new Mesh( ObstacleMaterial );
@@ -70,18 +73,18 @@ namespace BeatSaber
 
 				vb.AddCube( new Vector3( origin.x, 0.0f, offset.z ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
 				vb.AddCube( new Vector3( origin.x, extent.y, offset.z ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
-				vb.AddCube( new Vector3( origin.x, 0.0f, 3 * unitSize ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
-				vb.AddCube( new Vector3( origin.x, extent.y, 3 * unitSize ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
+				vb.AddCube( new Vector3( origin.x, 0.0f, 3 * unitSize + verticalOffset ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
+				vb.AddCube( new Vector3( origin.x, extent.y, 3 * unitSize + verticalOffset ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
 
 				vb.AddCube( new Vector3( 0.0f, origin.y, offset.z ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
 				vb.AddCube( new Vector3( extent.x, origin.y, offset.z ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
-				vb.AddCube( new Vector3( 0.0f, origin.y, 3 * unitSize ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
-				vb.AddCube( new Vector3( extent.x, origin.y, 3 * unitSize ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
+				vb.AddCube( new Vector3( 0.0f, origin.y, 3 * unitSize + verticalOffset ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
+				vb.AddCube( new Vector3( extent.x, origin.y, 3 * unitSize + verticalOffset ), new Vector3( outlineThickness, extent.y, outlineThickness ), new Rotation() );
 
 				outlineMesh.CreateBuffers( vb );
 			}
 
-			SetModel( Model.Builder.AddMesh( mesh ).AddMesh(outlineMesh).Create() );
+			Model = Model.Builder.AddMesh( mesh ).AddMesh(outlineMesh).Create();
 		}
 	}
 }

@@ -11,10 +11,12 @@ namespace BeatSaber
 		// Config
 
 		//size of a grid unit
-		public const float UnitSize = 25.0f;
+		public const float UnitSize = 22.0f;
+
+		public const float VerticalOffset = UnitSize / 2.0f;
 
 		// number of beats the user has to hit the note
-		const float NotePlayableWindow = 4.0f;
+		const float NotePlayableWindow = 3.0f;
 
 		// amount of time between note 'incoming' and when it becomes playable
 		//const float NoteIncomingWindow = 1.0f;
@@ -25,11 +27,11 @@ namespace BeatSaber
 		const float LateSliceWindow = 1.0f;
 
 		// note speedup without sacrificing BPM
-		const float NoteSpeed = 2.0f;
+		public const float NoteSpeed = 4.0f;
 
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
-		const float IncomingObstacleDistance = 400.0f;
+		const float IncomingObstacleDistance = 1600.0f;
 
 
 		//Network data
@@ -227,14 +229,14 @@ namespace BeatSaber
 
 			for( int i = 0; i <= 4; i++ )
 			{
-				Vector3 lanePos = new Vector3( 0.0f, i * UnitSize - laneWidth / 2, 0.0f );
+				Vector3 lanePos = new Vector3( 0.0f, i * UnitSize - laneWidth / 2, VerticalOffset );
 				DebugOverlay.Line( lanePos, lanePos.WithX(400.0f), Color.Green, 100.0f );
-				DebugOverlay.Line( lanePos, lanePos.WithZ(3 * UnitSize), Color.Green, 100.0f );
+				DebugOverlay.Line( lanePos, lanePos.WithZ( 3 * UnitSize + VerticalOffset ), Color.Green, 100.0f );
 			}
 
 			for(int i = 0; i <= 3; i++ )
 			{
-				Vector3 rowPos = new Vector3( 0.0f, -laneWidth / 2, i * UnitSize );
+				Vector3 rowPos = new Vector3( 0.0f, -laneWidth / 2, i * UnitSize + VerticalOffset );
 				DebugOverlay.Line( rowPos, rowPos.WithY( laneWidth / 2 ), Color.Green, 100.0f );
 			}
 		}
@@ -288,12 +290,12 @@ namespace BeatSaber
 
 		Vector3 GetNotePosition( BeatSaberNote note )
 		{
-			return new Vector3( GetObjectTimeOffset(note, false), -(note.LineIndex * UnitSize - (3 * UnitSize / 2.0f)), note.LineLayer * UnitSize + UnitSize / 2.0f );
+			return new Vector3( GetObjectTimeOffset(note, false), -(note.LineIndex * UnitSize - (3 * UnitSize / 2.0f)), note.LineLayer * UnitSize + UnitSize / 2.0f + VerticalOffset );
 		}
 
 		Vector3 GetObstaclePosition( BeatSaberObstacle obstacle )
 		{
-			return new Vector3( GetObjectTimeOffset( obstacle, true ), (obstacle.LineIndex - 2) * UnitSize, 0.0f );
+			return new Vector3( GetObjectTimeOffset( obstacle, true ), (2 - obstacle.LineIndex) * UnitSize, 0.0f );
 		}
 
 
@@ -311,15 +313,13 @@ namespace BeatSaber
 
 			//Log.Info( "Time elapsed " + Stream.TimeElapsed + " samples " + Stream.SamplesElapsed );
 
-			if((int)BeatsElapsed > BeatsPlayed)
+			if( (int)BeatsElapsed > BeatsPlayed )
 			{
 				BeatsPlayed = (int)BeatsElapsed;
 
 				//BPM pulse
 				foreach ( var light in Spotlights )
 					light.Pulse();
-
-				Color pillarColor = Color.Random;
 
 				if ( ++ColorCycle >= CycleColors.Length )
 					ColorCycle = 0;

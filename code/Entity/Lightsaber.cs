@@ -10,8 +10,7 @@ namespace BeatSaber
 		//[Net] public AnimEntity Blade { get; set; }
 		public BladeEntity Blade { get; set; }
 
-
-		Sound? LongClash { get; set; } = null;
+		public VRHand Hand => Owner as VRHand;
 
 		//bool _red = false;
 		//public bool Red
@@ -37,6 +36,8 @@ namespace BeatSaber
 			base.Spawn();
 
 			SetModel( "models/sabers/basic_saber.vmdl" );
+			SetupPhysicsFromModel( PhysicsMotionType.Dynamic );
+
 
 			Log.Info( "saber spawn" );
 			Blade = new BladeEntity() { Parent = this };
@@ -116,6 +117,8 @@ namespace BeatSaber
 
 	public partial class BladeEntity : AnimEntity
 	{
+		Lightsaber Saber => Parent as Lightsaber;
+
 		static readonly Material BlueMaterial = Material.Load( "materials/models/blade_blue.vmat" );
 		static readonly Material RedMaterial = Material.Load( "materials/models/blade_red.vmat" );
 
@@ -178,11 +181,46 @@ namespace BeatSaber
 			if ( !IsClient )
 				return;
 
-			if(other is Note note)
+			var hand = Saber.Hand.Hand;
+
+			if (other is Note note)
 			{
-				Vector3 normal = Vector3.Cross( Rotation.Up, Velocity.Normal );
-				note.Slice( Position, normal.Normal, Velocity.Normal, Red );
+				Vector3 normal = Vector3.Cross( Rotation.Up, hand.Velocity.Normal );
+				note.Slice( Position, normal.Normal, hand.Velocity.Normal, Red );
 			}
 		}
+
+		//[Event.Tick]
+		//void DrawPlane()
+		//{
+		//	if ( IsClient )
+		//		return;
+
+
+		//	Vector3 normal = Vector3.Cross( Rotation.Up, Saber.Hand.Hand.Velocity.Normal );
+		//	DebugDrawPlane( new Plane( Position, normal ) );
+
+		//	//Log.Info( "vel " + Velocity );
+		//	DebugOverlay.Line( Position, Position + normal * 20.0f, Color.Blue );
+		//}
+
+		//void DebugDrawPlane( Plane plane )
+		//{
+		//	Vector3 up = Vector3.Cross( plane.Normal, new Vector3( 0.0f, 1.0f, 0.0f ) ).Normal;
+		//	Vector3 right = Vector3.Cross( plane.Normal, up ).Normal;
+
+		//	int gridSize = 8;
+
+		//	float gridScale = 10.0f;
+
+		//	up *= gridScale;
+		//	right *= gridScale;
+
+		//	for ( int x = -gridSize; x <= gridSize; x++ )
+		//		DebugOverlay.Line( plane.Origin + right * x - up * gridSize, plane.Origin + right * x + up * gridSize, Color.Green, 100.0f );
+
+		//	for ( int y = -gridSize; y <= gridSize; y++ )
+		//		DebugOverlay.Line( plane.Origin + up * y - right * gridSize, plane.Origin + up * y + right * gridSize, Color.Green, 100.0f );
+		//}
 	}
 }
