@@ -49,6 +49,12 @@ namespace BeatSaber
 
 		[JsonPropertyName( "versions" )]
 		public MapVersion[] Versions { get; set; }
+
+		[JsonIgnore]
+		public string DownloadDirectory => "download/" + ID;
+
+		[JsonIgnore]
+		public bool Installed => FileSystem.Data.DirectoryExists( DownloadDirectory );
 	}
 
 	public struct MapDetailMetadata

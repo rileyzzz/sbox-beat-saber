@@ -12,11 +12,16 @@ namespace BeatSaber
 
 		TextEntry SearchBar;
 		Panel DownloadContainer;
+		Panel PagesContainer;
+		PageButton LeftButton;
+		PageButton RightButton;
+		Label PageLabel;
 
 		List<DownloadPanel> Songs = new();
 
 		BeatSaver.RequestInfo FinderTask = null;
 
+		int Page = 0;
 
 		public SongDownloader()
 		{
@@ -29,12 +34,40 @@ namespace BeatSaber
 
 			DownloadContainer = Content.AddChild<Panel>( "downloadContainer" );
 
+			PagesContainer = Content.AddChild<Panel>( "pagesContainer" );
+			
+			LeftButton = PagesContainer.AddChild<PageButton>( "button" );
+			PageLabel = PagesContainer.AddChild<Label>( "text" );
+			RightButton = PagesContainer.AddChild<PageButton>( "button" );
+
+			LeftButton.Icon.Text = "navigate_before";
+			RightButton.Icon.Text = "navigate_next";
+
+			LeftButton.AddEventListener( "onclick", PreviousPage );
+			RightButton.AddEventListener( "onclick", NextPage );
+
+			Refresh();
+		}
+
+		void PreviousPage()
+		{
+			if ( --Page < 0 )
+				Page = 0;
+
+			Refresh();
+		}
+
+		void NextPage()
+		{
+			Page++;
+
 			Refresh();
 		}
 
 		public void Refresh()
 		{
 			SearchBar.Placeholder = SearchBar.Text == "" ? "Search..." : "";
+			PageLabel.Text = (Page + 1).ToString();
 
 			// end any running tasks
 			Log.Info("cancel task");
@@ -42,10 +75,11 @@ namespace BeatSaber
 				FinderTask.Cancel = true;
 
 
-			if ( SearchBar.Text == "" )
-				FinderTask = BeatSaver.GetLatestMaps( MapsFound );
-			else
-				FinderTask = BeatSaver.SearchMaps( MapsFound, 0, SearchBar.Text );
+			//if ( SearchBar.Text == "" )
+			//	FinderTask = BeatSaver.GetLatestMaps( MapsFound );
+			//else
+			//	FinderTask = BeatSaver.SearchMaps( MapsFound, Page, SearchBar.Text );
+			FinderTask = BeatSaver.SearchMaps( MapsFound, Page, SearchBar.Text );
 		}
 
 		public void MapsFound( MapDetail[] maps )
@@ -59,11 +93,53 @@ namespace BeatSaber
 				panel.SetMap( map );
 				Songs.Add( panel );
 			}
+
+			//go back to the last page if there aren't any more maps
+			if( maps.Length == 0 && Page > 0 )
+			{
+				Page--;
+				Refresh();
+			}
 		}
 
 		public void SearchEdit()
 		{
+			Page = 0;
 			Refresh();
+		}
+	}
+
+	public partial class PageButton : Panel
+	{
+		public IconPanel Icon;
+
+		public PageButton()
+		{
+			Icon = AddChild<IconPanel>( "icon" );
+		}
+
+		protected override void OnMouseOver( MousePanelEvent e )
+		{
+			base.OnMouseOver( e );
+
+			SetClass( "hover", true );
+			e.StopPropagation();
+		}
+
+		protected override void OnMouseOut( MousePanelEvent e )
+		{
+			base.OnMouseOut( e );
+
+			SetClass( "hover", false );
+			e.StopPropagation();
+		}
+
+		protected override void OnClick( MousePanelEvent e )
+		{
+			base.OnClick( e );
+
+			CreateEvent( "onclick" );
+			e.StopPropagation();
 		}
 	}
 
@@ -101,6 +177,9 @@ namespace BeatSaber
 		{
 			Map = map;
 
+			if ( Map.Installed )
+				Download.SetInstalled();
+
 			Title.Text = Map.Name;
 			Description.Text = Map.Description;
 
@@ -115,6 +194,8 @@ namespace BeatSaber
 
 		BeatSaver.RequestInfo downloadTask = null;
 
+		bool Installed = false;
+
 		public DownloadButton()
 		{
 			Text = AddChild<Label>( "text" );
@@ -124,9 +205,20 @@ namespace BeatSaber
 			PlayIcon.Text = "play_arrow";
 		}
 
+		public void SetInstalled()
+		{
+			Installed = true;
+			Text.Text = "Installed";
+			PlayIcon.Text = "";
+			SetClass( "hover", false );
+		}
+
 		protected override void OnMouseOver( MousePanelEvent e )
 		{
 			base.OnMouseOver( e );
+
+			if ( Installed )
+				return;
 
 			SetClass( "hover", true );
 			e.StopPropagation();
@@ -136,6 +228,9 @@ namespace BeatSaber
 		{
 			base.OnMouseOut( e );
 
+			if ( Installed )
+				return;
+
 			SetClass( "hover", false );
 			e.StopPropagation();
 		}
@@ -143,6 +238,9 @@ namespace BeatSaber
 		protected override void OnClick( MousePanelEvent e )
 		{
 			base.OnClick( e );
+
+			if ( Installed )
+				return;
 
 			if ( Parent.Parent.Parent is not DownloadPanel download )
 				return;
@@ -167,9 +265,12 @@ namespace BeatSaber
 		{
 			base.Tick();
 
-			if( downloadTask != null )
+			if( downloadTask != null && !Installed )
 			{
-				Text.Text = downloadTask.Complete ? "Complete" : (downloadTask.Progress * 100.0f).ToString() + "%";
+				if ( !downloadTask.Complete )
+					Text.Text = (downloadTask.Progress * 100.0f).ToString() + "%";
+				else
+					SetInstalled();
 			}
 		}
 	}

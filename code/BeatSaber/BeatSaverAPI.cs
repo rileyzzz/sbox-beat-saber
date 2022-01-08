@@ -70,11 +70,14 @@ namespace BeatSaber
 		public static RequestInfo SearchMaps( Action<MapDetail[]> callback, int page = 0, string query = "" )
 		{
 			string url = "https://beatsaver.com/api/search/text/" + page;
+			//string url = "https://beatsaver.com/api/search/text/0/";
 
 			Dictionary<string, string> q = new();
 
 			if ( query != "" )
 				q["q"] = query;
+
+			//q["page"] = page.ToString();
 
 			url += BuildQuery( q );
 
@@ -118,8 +121,7 @@ namespace BeatSaber
 				if ( !fs.DirectoryExists( "download" ) )
 					fs.CreateDirectory("download");
 
-				string mapPath = "download/" + map.ID;
-
+				var mapPath = map.DownloadDirectory;
 				fs.CreateDirectory( mapPath );
 
 				//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
