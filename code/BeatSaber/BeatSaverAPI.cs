@@ -101,6 +101,22 @@ namespace BeatSaber
 			return info;
 		}
 
+		public static bool IsInWhitelist(string ext)
+		{
+			if ( ext == ".dat" ||
+				ext == ".json" ||
+				ext == ".ogg" ||
+				ext == ".egg" ||
+				ext == ".jpg" ||
+				ext == ".jpeg" ||
+				ext == ".bmp" ||
+				ext == ".png"
+				)
+				return true;
+
+			return false;
+		}
+
 		public static RequestInfo DownloadMap( MapDetail map )
 		{
 			string mapURL = map.Versions[0].DownloadURL;
@@ -124,16 +140,23 @@ namespace BeatSaber
 				var mapPath = map.DownloadDirectory;
 				fs.CreateDirectory( mapPath );
 
-				//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
-				var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
-
 				//using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
 				{
+					//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
+					var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
+
 					//foreach(var entry in zip.Entries)
 					for ( int i = 0; i < zip.Count; i++ )
 					{
 						//var entry = zip.Entries[i];
 						var entry = zip[i];
+						var ext = entry.Name.Substring( entry.Name.LastIndexOf( "." ) );
+
+						if(!IsInWhitelist(ext))
+						{
+							Log.Warning("File extension not in whitelist: " + entry.FullName + " for song " + map.Name);
+							continue;
+						}
 
 						using ( var data = entry.Open() )
 						using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )

@@ -100,10 +100,14 @@ namespace BeatSaber
 			_netLevel = level;
 			Difficulty = difficulty;
 
-			// clear active notes just in case
+			// clear active stuff just in case
 			foreach ( var note in ActiveNotes )
 				note.Delete();
 			ActiveNotes.Clear();
+
+			foreach ( var obstacle in ActiveObstacles )
+				obstacle.Delete();
+			ActiveObstacles.Clear();
 
 			//NoteData = new List<BeatSaberNote>(Level.Notes);
 
@@ -141,6 +145,14 @@ namespace BeatSaber
 			Playing = false;
 
 			Log.Info( "Song finished." );
+
+			foreach ( var note in ActiveNotes )
+				note.Delete();
+			ActiveNotes.Clear();
+
+			foreach ( var obstacle in ActiveObstacles )
+				obstacle.Delete();
+			ActiveObstacles.Clear();
 
 			Stream.Stop();
 			Stream = null;

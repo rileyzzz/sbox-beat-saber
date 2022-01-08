@@ -1,6 +1,9 @@
 using Sandbox;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -324,36 +327,95 @@ namespace BeatSaber
 
 			void INetworkSerializer.Write( NetWrite write )
 			{
-				write.Write( Level.Version );
+				//write.Write( Level.Version );
 
-				write.Write( Level.Notes.Length );
-				foreach ( var note in Level.Notes )
-					note.Write( write );
+				//write.Write( Level.Notes.Length );
+				//foreach ( var note in Level.Notes )
+				//	note.Write( write );
 
-				write.Write( Level.Obstacles.Length );
-				foreach ( var obstacle in Level.Obstacles )
-					obstacle.Write( write );
+				//write.Write( Level.Obstacles.Length );
+				//foreach ( var obstacle in Level.Obstacles )
+				//	obstacle.Write( write );
 
-				write.Write( Level.Events.Length );
-				foreach ( var evt in Level.Events )
-					evt.Write( write );
+				//write.Write( Level.Events.Length );
+				//foreach ( var evt in Level.Events )
+				//	evt.Write( write );
+
+				//using MemoryStream levelData = new MemoryStream();
+
+				using MemoryStream outStream = new MemoryStream();
+
+				using ( GZipStream compressedStream = new GZipStream( outStream, CompressionLevel.Fastest ) )
+				using ( BinaryWriter bw = new BinaryWriter( compressedStream, Encoding.UTF8 ) )
+				{
+					bw.Write( Level.Version );
+
+					bw.Write( Level.Notes.Length );
+					foreach ( var note in Level.Notes )
+						note.WriteStream( bw );
+
+					bw.Write( Level.Obstacles.Length );
+					foreach ( var obstacle in Level.Obstacles )
+						obstacle.WriteStream( bw );
+
+					bw.Write( Level.Events.Length );
+					foreach ( var evt in Level.Events )
+						evt.WriteStream( bw );
+				}
+
+				byte[] outData = outStream.ToArray();
+
+				if ( outData.Length > UInt16.MaxValue )
+					Log.Warning( "Level data of size " + outStream.Length + " exceeded max network buffer size." );
+
+				//Log.Info( "write level size " + outData.Length );
+
+				write.Write( outData.Length );
+				write.WriteUnmanagedArray( outData );
 			}
 
 			void INetworkSerializer.Read( ref NetRead read )
 			{
-				Level.Version = read.ReadString();
+				//Level.Version = read.ReadString();
 
-				Level.Notes = new BeatSaberNote[ read.Read<int>() ];
-				for ( int i = 0; i < Level.Notes.Length; i++ )
-					Level.Notes[i] = BeatSaberNote.Read( ref read );
+				//Level.Notes = new BeatSaberNote[ read.Read<int>() ];
+				//for ( int i = 0; i < Level.Notes.Length; i++ )
+				//	Level.Notes[i] = BeatSaberNote.Read( ref read );
 
-				Level.Obstacles = new BeatSaberObstacle[ read.Read<int>() ];
-				for ( int i = 0; i < Level.Obstacles.Length; i++ )
-					Level.Obstacles[i] = BeatSaberObstacle.Read( ref read );
+				//Level.Obstacles = new BeatSaberObstacle[ read.Read<int>() ];
+				//for ( int i = 0; i < Level.Obstacles.Length; i++ )
+				//	Level.Obstacles[i] = BeatSaberObstacle.Read( ref read );
 
-				Level.Events = new BeatSaberEvent[ read.Read<int>() ];
-				for ( int i = 0; i < Level.Events.Length; i++ )
-					Level.Events[i] = BeatSaberEvent.Read( ref read );
+				//Level.Events = new BeatSaberEvent[ read.Read<int>() ];
+				//for ( int i = 0; i < Level.Events.Length; i++ )
+				//	Level.Events[i] = BeatSaberEvent.Read( ref read );
+
+				int bufSize = read.Read<int>();
+				byte[] buf = new byte[ bufSize ];
+				read.ReadUnmanagedArray( buf );
+
+				Log.Info( "read level size " + buf.Length );
+
+				using MemoryStream inStream = new MemoryStream( buf, false );
+
+				using ( GZipStream compressedStream = new GZipStream( inStream, CompressionMode.Decompress ) )
+				using ( BinaryReader br = new BinaryReader( compressedStream, Encoding.UTF8 ) )
+				{
+					Level.Version = br.ReadString();
+
+					Level.Notes = new BeatSaberNote[br.ReadInt32()];
+					for ( int i = 0; i < Level.Notes.Length; i++ )
+						Level.Notes[i] = BeatSaberNote.ReadStream( br );
+
+					Level.Obstacles = new BeatSaberObstacle[br.ReadInt32()];
+					for ( int i = 0; i < Level.Obstacles.Length; i++ )
+						Level.Obstacles[i] = BeatSaberObstacle.ReadStream( br );
+
+					Level.Events = new BeatSaberEvent[br.ReadInt32()];
+					for ( int i = 0; i < Level.Events.Length; i++ )
+						Level.Events[i] = BeatSaberEvent.ReadStream( br );
+				}
+
 			}
 		}
 	}
@@ -431,6 +493,28 @@ namespace BeatSaber
 
 			return Note;
 		}
+
+		public void WriteStream( BinaryWriter bw )
+		{
+			bw.Write( Time );
+			bw.Write( LineIndex );
+			bw.Write( LineLayer );
+			bw.Write( (int)Type );
+			bw.Write( (int)Direction );
+		}
+
+		public static BeatSaberNote ReadStream( BinaryReader br )
+		{
+			BeatSaberNote Note = new();
+
+			Note.Time = br.ReadSingle();
+			Note.LineIndex = br.ReadInt32();
+			Note.LineLayer = br.ReadInt32();
+			Note.Type = (NoteType)br.ReadInt32();
+			Note.Direction = (CutDirection)br.ReadInt32();
+
+			return Note;
+		}
 	}
 
 	public enum ObstacleType
@@ -483,6 +567,28 @@ namespace BeatSaber
 			Obstacle.Type = (ObstacleType)read.Read<int>();
 			Obstacle.Duration = read.Read<float>();
 			Obstacle.Width = read.Read<int>();
+
+			return Obstacle;
+		}
+
+		public void WriteStream( BinaryWriter bw )
+		{
+			bw.Write( Time );
+			bw.Write( LineIndex );
+			bw.Write( (int)Type );
+			bw.Write( Duration );
+			bw.Write( Width );
+		}
+
+		public static BeatSaberObstacle ReadStream( BinaryReader br )
+		{
+			BeatSaberObstacle Obstacle = new();
+
+			Obstacle.Time = br.ReadSingle();
+			Obstacle.LineIndex = br.ReadInt32();
+			Obstacle.Type = (ObstacleType)br.ReadInt32();
+			Obstacle.Duration = br.ReadSingle();
+			Obstacle.Width = br.ReadInt32();
 
 			return Obstacle;
 		}
@@ -561,6 +667,26 @@ namespace BeatSaber
 			Event.Type = (EventType)read.Read<int>();
 			Event.Value = read.Read<int>();
 			Event.FloatValue = read.Read<float>();
+
+			return Event;
+		}
+
+		public void WriteStream( BinaryWriter bw )
+		{
+			bw.Write( Time );
+			bw.Write( (int)Type );
+			bw.Write( Value );
+			bw.Write( FloatValue );
+		}
+
+		public static BeatSaberEvent ReadStream( BinaryReader br )
+		{
+			BeatSaberEvent Event = new();
+
+			Event.Time = br.ReadSingle();
+			Event.Type = (EventType)br.ReadInt32();
+			Event.Value = br.ReadInt32();
+			Event.FloatValue = br.ReadSingle();
 
 			return Event;
 		}
