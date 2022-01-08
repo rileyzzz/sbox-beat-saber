@@ -88,11 +88,10 @@ namespace BeatSaber
 		{
 			Song = song;
 
-			Title.Text = song.SongName + " " + song.SongSubName;
-			Author.Text = song.SongAuthorName + "\n" + song.LevelAuthorName;
+			Title.Text = Song.SongName + " " + Song.SongSubName;
+			Author.Text = Song.SongAuthorName + "\n" + Song.LevelAuthorName;
 
-			var tex = Texture.Load( FileSystem.Data, Song.Directory + Song.CoverImageFilename );
-			Image.Texture = tex;
+			Image.Texture = Song.CoverTexture;
 		}
 
 		protected override void OnClick( MousePanelEvent e )
@@ -110,33 +109,70 @@ namespace BeatSaber
 	public partial class DetailsPanel : Panel
 	{
 		BeatSaberSong Song = null;
-		
+
+		Panel Inner;
+		Panel LeftDetails;
+		Panel RightDetails;
+		Panel SongControls;
+
 		Label Title;
+		//Label SubTitle;
+		//Label SongAuthor;
+		//Label BeatmapAuthor;
+
+		Image SongImage;
+
 		Panel DifficultyContainer;
 		DifficultySelector Difficulty;
 
 		Panel DescriptionContainer;
-
-		Panel SongControls;
+		Label Description;
+		
 		PlayButton Play;
 
 		public DetailsPanel()
 		{
-			Title = AddChild<Label>( "title" );
-			DifficultyContainer = AddChild<Panel>( "difficultyContainer" );
-			Difficulty = DifficultyContainer.AddChild<DifficultySelector>( "difficulty" );
+			Inner = AddChild<Panel>( "inner" );
+			LeftDetails = Inner.AddChild<Panel>( "leftDetails" );
+			RightDetails = Inner.AddChild<Panel>( "rightDetails" );
 
-			DescriptionContainer = AddChild<Panel>( "descriptionContainer" );
+			Title = LeftDetails.AddChild<Label>( "title" );
+			//SubTitle = LeftDetails.AddChild<Label>( "subtitle" );
+			//SongAuthor = LeftDetails.AddChild<Label>( "subtitle" );
+			//BeatmapAuthor = LeftDetails.AddChild<Label>( "subtitle" );
+			DescriptionContainer = LeftDetails.AddChild<Panel>( "descriptionContainer" );
+			Description = DescriptionContainer.AddChild<Label>( "description" );
+
+			SongImage = RightDetails.AddChild<Image>( "image" );
 
 			SongControls = AddChild<Panel>( "songControls" );
+
+			DifficultyContainer = SongControls.AddChild<Panel>( "difficultyContainer" );
+			Difficulty = DifficultyContainer.AddChild<DifficultySelector>( "difficulty" );
+
 			Play = SongControls.AddChild<PlayButton>( "play" );
+			Play.Style.Display = DisplayMode.None;
 		}
 
 		public void UpdateSelected(BeatSaberSong song)
 		{
 			Song = song;
 
-			Title.Text = song.SongName + " " + song.SongSubName;
+			Title.Text = Song.SongName;
+			//SubTitle.Text = Song.SongSubName;
+			//SongAuthor.Text = Song.SongAuthorName;
+			//BeatmapAuthor.Text = Song.LevelAuthorName;
+			Description.Text = "";
+			if ( Song.SongSubName != String.Empty )
+				Description.Text += Song.SongSubName + "\n";
+			if ( Song.SongAuthorName != String.Empty )
+				Description.Text += Song.SongAuthorName + "\n";
+			if ( Song.LevelAuthorName != String.Empty )
+				Description.Text += Song.LevelAuthorName + "\n";
+
+			SongImage.Texture = Song.CoverTexture;
+
+			Play.Style.Display = song != null ? DisplayMode.Flex : DisplayMode.None;
 
 			Difficulty.SetDifficulties( Song.DifficultyBeatmapSets[0].DifficultyBeatmaps );
 		}

@@ -3,13 +3,15 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background-color: #1d1e1e;
+    background-color: #1d1d1d;
+
     flex-direction: row;
 
     .container {
         padding: 32px;
         /*margin: auto;*/
         /*width: 400px;*/
+        background-color: #262626;
         width: 800px;
         height: 100%;
         flex-direction: column;
@@ -21,14 +23,16 @@
         .song {
             width: 98%;
             height: 128px;
-            margin: 2px;
-            border: 2px solid white;
+            margin: 4px;
+            border: 1px solid #424242;
+
             border-radius: 4px;
             flex-direction: row;
             flex-shrink: 0;
             flex-grow: 0;
             padding: 8px;
-            background-color: #264178;
+
+            background-color: #121212;
             pointer-events: all;
 
             &.selected {
@@ -42,6 +46,7 @@
                 flex-shrink: 1;
                 flex-direction: column;
                 pointer-events: none;
+                margin-left: 8px;
 
                 .title {
                     width: 100%;
@@ -85,96 +90,123 @@
         /*width: 100%;*/
         height: 100%;
         flex-grow: 1;
-        flex-shrink: 0;
+        flex-shrink: 1;
         padding: 32px;
         flex-direction: column;
 
-        .title {
-            font-family: Poppins;
-            font-weight: bold;
-            font-size: 48px;
-            color: white;
-            text-shadow: 2px 2px 2px rgba( black, 0.4 );
-
-            height: 96px;
-            width: 100%;
-        }
-
-        .difficultyContainer {
-            width: 100%;
-            height: 38px;
+        .inner {
             flex-direction: row;
+            flex-grow: 1;
+            flex-shrink: 1;
+            width: 100%;
 
-            .difficulty {
-                /*margin: auto;*/
-                margin-left: 10px;
-
-                flex-direction: row;
-                /*width:600px;*/
+            .leftDetails {
+                flex-direction: column;
                 height: 100%;
-                background-color: #0a0a0a;
-                border-radius: 8px;
-                flex-grow: 0;
-                flex-shrink: 0;
+                flex-grow: 1;
+                flex-shrink: 1;
 
-                .entry {
-                    width: 128px;
-                    height: 100%;
-                    flex-grow: 0;
+                .title {
+                    font-family: Poppins;
+                    font-weight: bold;
+                    font-size: 48px;
+                    color: white;
+                    text-shadow: 2px 2px 2px rgba( black, 0.4 );
+                    height: 96px;
+                    width: 100%;
+                }
+
+                .descriptionContainer {
+                    width: 100%;
+                    flex-grow: 1;
                     flex-shrink: 0;
-                    border-radius: 8px;
-                    pointer-events: all;
 
-                    padding: 2px;
-                    .text {
-                        /*margin: auto;*/
+                    .description {
                         width: 100%;
                         height: 100%;
 
-                        text-align: center;
-
+                        overflow: hidden;
                         font-family: Poppins;
-                        font-size: 24px;
-                        color: #747474;
-                        pointer-events: none;
+                        /*font-weight: bold;*/
+                        font-size: 18px;
+                        color: #a8a8a8;
+                        text-shadow: 2px 2px 2px rgba( black, 0.4 );
+                        /*margin: 2px;*/
                     }
+                }
+            }
 
-                    &.selected {
-                        background-color: #444de2;
-                    }
+            .rightDetails {
+                flex-direction: column;
+                height: 100%;
+                flex-grow: 0;
+                flex-shrink: 0;
+
+                .image {
+                    width: 512px;
+                    height: 512px;
                 }
             }
         }
 
-        .descriptionContainer {
-            width: 100%;
-
-            flex-grow: 1;
+        .songControls {
+            width: 256px;
+            flex-direction: column;
+            flex-grow: 0;
             flex-shrink: 0;
 
-        }
 
-        .songControls {
-/*            position: absolute;
+            .difficultyContainer {
+                width: 100%;
+                height: 38px;
+                flex-direction: row;
+                margin-bottom: 12px;
 
-            bottom: 10px;
-            right: 10px;*/
+                .difficulty {
+                    /*margin: auto;*/
+                    /*margin-left: 10px;*/
+                    flex-direction: row;
+                    /*width:600px;*/
+                    height: 100%;
+                    background-color: #0a0a0a;
+                    border-radius: 8px;
+                    flex-grow: 0;
+                    flex-shrink: 0;
 
-            width: 256px;
-            
-            flex-direction: column;
+                    .entry {
+                        width: 128px;
+                        height: 100%;
+                        flex-grow: 0;
+                        flex-shrink: 0;
+                        border-radius: 8px;
+                        pointer-events: all;
+                        padding: 2px;
+
+                        .text {
+                            /*margin: auto;*/
+                            width: 100%;
+                            height: 100%;
+                            text-align: center;
+                            font-family: Poppins;
+                            font-size: 24px;
+                            color: #747474;
+                            pointer-events: none;
+                        }
+
+                        &.selected {
+                            background-color: #444de2;
+                        }
+                    }
+                }
+            }
 
             .play {
                 width: 100%;
                 height: 48px;
-
                 background-color: #1a1a1a;
-
-                border: 2px solid blue;
-                border-radius: 8px;
-
+                border: 1px solid #404040;
+                border-radius: 4px;
                 pointer-events: all;
-
                 padding: 4px;
 
                 &.hover {
@@ -184,18 +216,14 @@
                 .text {
                     margin-left: 8px;
                     height: 100%;
-
                     pointer-events: none;
                     font-family: Poppins;
                     font-weight: bold;
                     font-size: 24px;
                     color: white;
                     pointer-events: none;
-
-
                     flex-grow: 1;
                     flex-shrink: 0;
-
                     pointer-events: none;
                 }
 
@@ -204,17 +232,13 @@
                     padding-top: 6px;
                     width: 28px;
                     height: 100%;
-
                     flex-grow: 0;
                     flex-shrink: 0;
-
                     font-size: 24px;
-
                     font-family: MaterialIcons;
                     /*padding: 8px;*/
 
                     color: #449224;
-
                     pointer-events: none;
                 }
             }

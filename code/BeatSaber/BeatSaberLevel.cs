@@ -82,6 +82,9 @@ namespace BeatSaber
 		[JsonPropertyName( "_coverImageFilename" )]
 		public string CoverImageFilename { get; set; }
 
+		[JsonIgnore]
+		public Texture CoverTexture => Texture.Load( FileSystem.Data, Directory + CoverImageFilename );
+
 		//[Net]
 		[JsonPropertyName( "_environmentName" )]
 		public string EnvironmentName { get; set; }

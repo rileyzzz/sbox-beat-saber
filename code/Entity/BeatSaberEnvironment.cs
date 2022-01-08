@@ -100,13 +100,6 @@ namespace BeatSaber
 			_netLevel = level;
 			Difficulty = difficulty;
 
-			BeatsPlayed = 0;
-			ColorCycle = 0;
-
-			CurrentNote = 0;
-			CurrentObstacle = 0;
-			CurrentEvent = 0;
-
 			// clear active notes just in case
 			foreach ( var note in ActiveNotes )
 				note.Delete();
@@ -124,6 +117,14 @@ namespace BeatSaber
 		void StartClient()
 		{
 			Local.Hud.Style.Display = Sandbox.UI.DisplayMode.None;
+
+			//reset these clientside
+			BeatsPlayed = 0;
+			ColorCycle = 0;
+
+			CurrentNote = 0;
+			CurrentObstacle = 0;
+			CurrentEvent = 0;
 
 			Log.Info( "playing " + Song.Directory + Song.SongFilename );
 			Stream = new MusicStream( Song.Directory + Song.SongFilename );
@@ -310,8 +311,6 @@ namespace BeatSaber
 				SongFinished();
 				return;
 			}
-
-			//Log.Info( "Time elapsed " + Stream.TimeElapsed + " samples " + Stream.SamplesElapsed );
 
 			if( (int)BeatsElapsed > BeatsPlayed )
 			{

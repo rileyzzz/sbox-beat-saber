@@ -73,8 +73,8 @@ namespace BeatSaber
 
 		Panel Details;
 		Label Title;
+		Label Description;
 
-		Panel Inner;
 		Panel Controls;
 		DownloadButton Download;
 
@@ -88,8 +88,7 @@ namespace BeatSaber
 		{
 			Details = AddChild<Panel>( "details" );
 			Title = Details.AddChild<Label>( "title" );
-
-			Inner = Details.AddChild<Panel>( "inner" );
+			Description = Details.AddChild<Label>( "description" );
 
 			Controls = Details.AddChild<Panel>( "controls" );
 			Download = Controls.AddChild<DownloadButton>( "download" );
@@ -102,7 +101,8 @@ namespace BeatSaber
 		{
 			Map = map;
 
-			Title.SetText( Map.Name );
+			Title.Text = Map.Name;
+			Description.Text = Map.Description;
 
 			Cover.SetTexture( Map.Versions[0].CoverURL );
 		}
@@ -147,7 +147,7 @@ namespace BeatSaber
 			if ( Parent.Parent.Parent is not DownloadPanel download )
 				return;
 
-			if ( downloadTask != null && downloadTask.Complete )
+			if ( downloadTask != null )
 				return;
 
 			Download( download.Map );
