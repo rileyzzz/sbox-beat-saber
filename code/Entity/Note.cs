@@ -9,6 +9,7 @@ namespace BeatSaber
 	public partial class Note : AnimEntity
 	{
 		static readonly Model BlockModel = Model.Load( "models/block.vmdl" );
+		static readonly Model BombNoteModel = Model.Load( "models/bomb_note.vmdl" );
 
 		BeatSaberNote _data;
 		public BeatSaberNote Data
@@ -98,7 +99,16 @@ namespace BeatSaber
 				SetMaterialGroup(matgroup);
 				//Scale = BeatSaberEnvironment.UnitSize / 100.0f;
 			}
+			else if ( Data.Type == NoteType.Bomb )
+			{
+				Model = BombNoteModel;
+				SetupPhysicsFromModel( PhysicsMotionType.Static ); SetupPhysicsFromModel( PhysicsMotionType.Static );
+				CurrentSequence.Name = "enter_anim";
 
+				Rotation = Rotation.FromYaw( 180.0f );
+			}
+			else
+				Log.Warning("Unknown note type!");
 		}
 
 		void CreateGib( string name, Mesh mesh, Vector3[] vertices, Vector3 velocity )
