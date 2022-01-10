@@ -12,6 +12,8 @@ namespace BeatSaber
 
 		public VRHand Hand => Owner as VRHand;
 
+		//[Net] public bool Red { get; set; } = false;
+
 		//bool _red = false;
 		//public bool Red
 		//{
@@ -40,7 +42,10 @@ namespace BeatSaber
 
 
 			Log.Info( "saber spawn" );
-			Blade = new BladeEntity() { Parent = this };
+			
+			Blade = Create<BladeEntity>();
+			Blade.SetParent( this );
+
 			Blade.Rotation = Rotation.From( 90.0f, 0.0f, 0.0f );
 			//Blade.SetMaterialOverride( Red ? RedMaterial : BlueMaterial );
 
@@ -119,10 +124,28 @@ namespace BeatSaber
 	{
 		Lightsaber Saber => Parent as Lightsaber;
 
+		static readonly Model BladeModel = Model.Load( "models/blade.vmdl" );
 		static readonly Material BlueMaterial = Material.Load( "materials/models/blade_blue.vmat" );
 		static readonly Material RedMaterial = Material.Load( "materials/models/blade_red.vmat" );
 
-		[Net, Change] public bool Red { get; set; } = false;
+
+		// this is awful. we really don't need two red variables
+		// but spawn gets called really weirdly
+		[Net] bool _red { get; set; } = false;
+
+		public bool Red
+		{
+			get => _red;
+			set
+			{
+				_red = value;
+
+				SetMaterialGroup( Red ? 1 : 0 );
+
+				foreach ( var light in BladeLights )
+					light.Color = new Color( Red ? 0xFF2020BA : 0xFFF8672E );
+			}
+		}
 
 
 		const int numBladeLights = 4;
@@ -133,10 +156,11 @@ namespace BeatSaber
 
 		}
 
-		public void OnRedChanged( bool oldValue, bool newValue )
-		{
-			SetMaterialOverride( Red ? RedMaterial : BlueMaterial );
-		}
+		//public void OnRedChanged( bool oldValue, bool newValue )
+		//{
+		//	//Log.Info( "red changed " + IsClient + " " + Red );
+		//	//SetMaterialOverride( Red ? RedMaterial : BlueMaterial );
+		//}
 
 		public override void Spawn()
 		{
@@ -144,8 +168,9 @@ namespace BeatSaber
 
 			Log.Info( "blade spawn client " + IsClient );
 			//SetModel( BladeModel );
-			SetModel( "models/blade.vmdl" );
+			Model = BladeModel;
 
+			//SetMaterialGroup( Saber.Red ? 1 : 0 );
 
 			SetupPhysicsFromModel( PhysicsMotionType.Static );
 			CollisionGroup = CollisionGroup.Trigger;
@@ -160,7 +185,7 @@ namespace BeatSaber
 				//BladeLight.Position = new Vector3( BladeHeight / 2.0f, 0.0f, 0.0f );
 				BladeLight.Position = new Vector3( offset * Lightsaber.BladeHeight, 0.0f, 0.0f );
 				//BladeLight.Color = new Color( 0x2E67F8FF );
-				BladeLight.Color = new Color( Red ? 0xFF2020BA : 0xFFF8672E );
+				//BladeLight.Color = new Color( Saber.Red ? 0xFF2020BA : 0xFFF8672E );
 				BladeLight.Brightness = 0.2f;
 
 				BladeLight.EnableShadowCasting = false;

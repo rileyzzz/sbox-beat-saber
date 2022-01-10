@@ -113,6 +113,11 @@ namespace BeatSaber
 
 		void CreateGib( string name, Mesh mesh, Vector3[] vertices, Vector3 velocity )
 		{
+			//either AddMesh or AddCollisionHull likes to crash if the mesh is really small
+
+			if ( vertices.Length <= 3 )
+				return;
+
 			var gib = new PropGib
 			{
 				Position = Position,

@@ -41,6 +41,9 @@ namespace Utils
 		{
 			Vertices = model.GetVertices();
 			Indices = model.GetIndices();
+
+			if( Vertices == null || Indices == null )
+				Log.Error("Unable to retrieve model data!");
 		}
 	}
 
@@ -129,15 +132,15 @@ namespace Utils
 	public static class ModelSlicer
 	{
 		//Cache our model data because GetVertices and GetIndices like to crash :)
-		static Dictionary<Model, CachedModel> ModelCache = new();
+		static Dictionary<int, CachedModel> ModelCache = new();
 
 		static CachedModel GetCachedModel(Model model)
 		{
-			if ( ModelCache.TryGetValue( model, out CachedModel val ) )
+			if ( ModelCache.TryGetValue( model.ResourceId, out CachedModel val ) )
 				return val;
 
 			var cached = new CachedModel( model );
-			ModelCache[model] = cached;
+			ModelCache[model.ResourceId] = cached;
 			return cached;
 		}
 

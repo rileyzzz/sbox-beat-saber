@@ -22,6 +22,7 @@ namespace BeatSaber
 			Transmit = TransmitType.Always;
 		}
 
+
 		public override void Spawn()
 		{
 			base.Spawn();
@@ -32,8 +33,12 @@ namespace BeatSaber
 			Position = Hand.Transform.Position;
 			Rotation = Hand.Transform.Rotation;
 
-			Saber = new Lightsaber() { Owner = this };
-			//Saber = Create<Lightsaber>();
+			//Saber = new Lightsaber() { Owner = this, Red = IsLeft };
+
+			Saber = Create<Lightsaber>();
+			Saber.Owner = this;
+			Saber.Blade.Red = IsLeft;
+
 			//Saber.Parent = this;
 
 			//we want physics to interpolate the motion of the lightsabers separately so notes don't get missed
@@ -49,8 +54,6 @@ namespace BeatSaber
 				//.WithLinearSpring( 8.0f, 0.8f, 0.0f )
 				.Create();
 
-			Saber.Blade.Red = IsLeft;
-			
 			//Saber = new Lightsaber();
 			//Saber.Parent = this;
 			//Saber.Red = IsLeft;
