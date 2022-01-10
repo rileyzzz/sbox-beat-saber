@@ -34,6 +34,11 @@ namespace BeatSaber
 		//const float IncomingNoteDistance = 400.0f;
 		const float IncomingObstacleDistance = 1600.0f;
 
+		// amount of time before hit noises stop
+		const float HitTolerance = 1.0f;
+
+		// Helpers
+		public static BeatSaberEnvironment Current = null;
 
 		// Network data
 		[Net] BeatSaberSong.Networked _netSong { get; set; }
@@ -71,14 +76,41 @@ namespace BeatSaber
 		LaserCluster LeftLasers;
 		LaserCluster RightLasers;
 
-		WorldPanel SongInfo;
+		WorldPanel InfoRoot;
 		SongInfoPanel InfoPanel;
+
+		WorldPanel ScoreRoot;
+		ScorePanel ScorePanel;
 
 		int BeatsPlayed = 0;
 
 		int CurrentNote = 0;
 		int CurrentObstacle = 0;
 		int CurrentEvent = 0;
+
+		int _combo = 0;
+		public int Combo
+		{
+			get => _combo;
+			set
+			{
+				_combo = value;
+				if ( ScorePanel != null )
+					ScorePanel.Combo.Text = _combo.ToString();
+			}
+		}
+
+		int _score = 0;
+		public int Score
+		{
+			get => _score;
+			set
+			{
+				_score = value;
+				if ( ScorePanel != null )
+					ScorePanel.Score.Text = _score.ToString();
+			}
+		}
 
 		int ColorCycle = 0;
 		Color[] CycleColors = new Color[] {
@@ -87,6 +119,8 @@ namespace BeatSaber
 			Color.Green,
 			Color.Magenta
 		};
+
+		float lastHitTime = 0.0f;
 
 		public BeatSaberEnvironment()
 		{
@@ -100,6 +134,8 @@ namespace BeatSaber
 				Log.Error( "Tried to start map on client" );
 				return;
 			}
+			
+			Current = this;
 
 			_netSong = song;
 			_netLevel = level;
@@ -125,6 +161,8 @@ namespace BeatSaber
 		[ClientRpc]
 		void StartClient()
 		{
+			Current = this;
+
 			Local.Hud.Style.Display = Sandbox.UI.DisplayMode.None;
 
 			//reset these clientside
@@ -134,6 +172,9 @@ namespace BeatSaber
 			CurrentNote = 0;
 			CurrentObstacle = 0;
 			CurrentEvent = 0;
+
+			Combo = 0;
+			Score = 0;
 
 			Log.Info( "playing " + Song.Directory + Song.SongFilename );
 			Stream = new MusicStream( Song.Directory + Song.SongFilename );
@@ -175,10 +216,15 @@ namespace BeatSaber
 
 			MapGenerated = true;
 
-			SongInfo = new WorldPanel();
-			SongInfo.Transform = new Transform( new Vector3(400.0f, 0.0f, 100.0f), Rotation.From( 25.0f, 180.0f, 0.0f ), 4.0f );
+			InfoRoot = new WorldPanel();
+			InfoRoot.Transform = new Transform( new Vector3(400.0f, 0.0f, 100.0f), Rotation.From( 25.0f, 180.0f, 0.0f ), 4.0f );
 
-			InfoPanel = SongInfo.AddChild<SongInfoPanel>( "infoPanel" );
+			InfoPanel = InfoRoot.AddChild<SongInfoPanel>( "infoPanel" );
+
+			ScoreRoot = new WorldPanel();
+			ScoreRoot.Transform = new Transform( new Vector3( 200.0f, 100.0f, 40.0f ), Rotation.From( 0.0f, -155.0f, 0.0f ), 4.0f );
+
+			ScorePanel = ScoreRoot.AddChild<ScorePanel>( "scorePanel" );
 
 			LeftBars = new VisualizerBar[numVisualizerBars];
 			RightBars = new VisualizerBar[numVisualizerBars];
@@ -323,6 +369,18 @@ namespace BeatSaber
 			return new Vector3( GetObjectTimeOffset( obstacle, true ), (2 - obstacle.LineIndex) * UnitSize, 0.0f );
 		}
 
+		public void NoteHit( int score )
+		{
+			lastHitTime = Time.Now;
+
+			Combo++;
+			Score += score;
+		}
+
+		public void NoteMiss()
+		{
+			Combo = 0;
+		}
 
 		[Event.Tick]
 		void Tick()
@@ -337,6 +395,9 @@ namespace BeatSaber
 				SongFinished();
 				return;
 			}
+
+			float timeSinceLastHit = Time.Now - lastHitTime;
+
 
 			if( (int)BeatsElapsed > BeatsPlayed )
 			{
@@ -418,14 +479,20 @@ namespace BeatSaber
 				{
 					note.SoundPlayed = true;
 
-					if ( note.Hit )
+					if ( note.Hit || timeSinceLastHit <= HitTolerance )
 						newHitThisTick = true;
 					else
 						newMissThisTick = true;
 				}
 
 				if( noteTime <= -LateSliceWindow)
+				{
+					// TODO add a small miss marker
+					// don't play a sound effect because that will be off time
+					NoteMiss();
+
 					RemoveNotes.Add( note );
+				}
 			}
 
 			foreach(var note in RemoveNotes)

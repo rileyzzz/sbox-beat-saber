@@ -87,11 +87,17 @@ public class MusicStream
 	Sound sound;
 	SoundStream stream;
 
-	double startTime = 0.0f;
+	float StartOffset = 0.0f;
+	float Duration = 0.0f;
+	bool Fade = false;
+	float FadeTime = 2.5f;
 
-	public MusicStream(string path)
+	public MusicStream(string path, float startOffset = 0.0f, float duration = 0.0f, bool fade = false)
 	{
 		Path = path;
+		StartOffset = startOffset;
+		Duration = duration;
+		Fade = fade;
 
 		var fs = FileSystem.Data;
 		if ( !fs.FileExists( Path ) )
@@ -110,6 +116,11 @@ public class MusicStream
 
 		channelWindows = new List<VisualizerWindow>[reader.Channels];
 		//ReadAudio();
+	}
+
+	~MusicStream()
+	{
+		Stop();
 	}
 
 	//void ReadAudio()
@@ -143,9 +154,24 @@ public class MusicStream
 		return (short)(sample * short.MaxValue);
 	}
 
+	float Lerp( float a, float b, float f )
+	{
+		return a + f * (b - a);
+	}
+
 	public void Play()
 	{
 		Log.Info("Playing " + Path);
+		Log.Info("Offset: " + StartOffset + " duration: " + Duration);
+
+		float sampleOffset = StartOffset * reader.SampleRate;
+		float sampleDuration = Duration * reader.SampleRate;
+		float fadeSamples = FadeTime * reader.SampleRate;
+		if ( sampleOffset >= reader.TotalSamples )
+		{
+			Log.Warning( "Invalid start offset." );
+			return;
+		}
 
 		for ( int i = 0; i < channelWindows.Length; i++ )
 			channelWindows[i] = new List<VisualizerWindow>();
@@ -167,8 +193,20 @@ public class MusicStream
 			deinterleaved_data[i] = new float[ChannelBufferSize];
 
 		int cnt;
+		int samplesProcessed = 0;
 		while ( (cnt = reader.ReadSamples( readBuffer, 0, bufferSize )) > 0 )
 		{
+			samplesProcessed += cnt;
+
+			if (samplesProcessed < sampleOffset)
+				continue;
+
+			if ( Duration != 0.0f && samplesProcessed >= sampleOffset + sampleDuration )
+				break;
+
+			float fadeAmt = 1.0f;
+			if( Fade )
+				fadeAmt = Math.Clamp( Math.Min( samplesProcessed - sampleOffset, sampleOffset + sampleDuration - samplesProcessed ) / fadeSamples, 0.0f, 1.0f );
 
 			//windows.Add( CreateVisualizerWindow( readBuffer ) );
 
@@ -176,7 +214,7 @@ public class MusicStream
 			{
 				for(int j = 0; j < reader.Channels; j++ )
 				{
-					float sample = readBuffer[i + j];
+					float sample = readBuffer[i + j] * fadeAmt;
 					writeBuffer[i + j] = ConvertSample( sample );
 					deinterleaved_data[j][i / reader.Channels] = sample;
 				}
@@ -187,8 +225,6 @@ public class MusicStream
 
 			stream.WriteData( writeBuffer );
 		}
-
-		startTime = Time.Sound;
 	}
 
 	public void Stop()

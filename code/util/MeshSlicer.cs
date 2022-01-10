@@ -43,7 +43,7 @@ namespace Utils
 			Indices = model.GetIndices();
 
 			if( Vertices == null || Indices == null )
-				Log.Error("Unable to retrieve model data!");
+				Log.Error( "Unable to retrieve model data! Ensure model is compiled with CPU access!" );
 		}
 	}
 

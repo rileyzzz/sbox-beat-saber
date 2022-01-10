@@ -164,6 +164,8 @@ namespace BeatSaber
 
 			SlicePlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
 			SliceVelocity = velocity;
+
+			BeatSaberEnvironment.Current?.NoteHit( 200 );
 		}
 
 		[Event.Tick]

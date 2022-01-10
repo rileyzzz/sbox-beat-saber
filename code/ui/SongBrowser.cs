@@ -7,6 +7,8 @@ namespace BeatSaber
 {
 	public partial class SongBrowser : Panel
 	{
+		public MusicStream PreviewStream = null;
+
 		Panel SongContainer;
 		DetailsPanel DetailsPanel;
 
@@ -60,6 +62,12 @@ namespace BeatSaber
 		{
 			foreach ( var song in Songs )
 				song.SetClass( "selected", song == Selected );
+
+			var sel = Selected.Song;
+
+			//PreviewStream?.Stop();
+			PreviewStream = new MusicStream( sel.Directory + sel.SongFilename, sel.PreviewStartTime, sel.PreviewDuration, true );
+			PreviewStream.Play();
 		}
 	}
 
@@ -179,6 +187,10 @@ namespace BeatSaber
 
 		public void PlaySong()
 		{
+			if ( Parent is not SongBrowser browser )
+				return;
+
+			browser.PreviewStream?.Stop();
 			BeatSaberGame.PlaySong( Song.Directory, Difficulty.SelectionIndex );
 		}
 	}
