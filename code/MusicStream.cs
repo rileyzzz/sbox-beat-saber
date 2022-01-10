@@ -235,6 +235,7 @@ public class MusicStream
 
 	//unresampled
 	public float OriginalSamplesElapsed => (reader.TotalSamples - stream.QueuedSampleCount * ((float)reader.SampleRate / sbox_samplerate));
+	public float FractionElapsed => OriginalSamplesElapsed / reader.TotalSamples;
 
 	public VisualizerWindow? GetVisualizerWindow( int channelIdx )
 	{

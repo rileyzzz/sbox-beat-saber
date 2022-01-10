@@ -165,12 +165,12 @@ namespace BeatSaber
 		void Tick()
 		{
 			// we can't do this in slice because that happens in the physics thread
-			// creating props there likes to crash the game
+			// seems like creating props there likes to crash the game
 			if(Hit && !GibsCreated)
 			{
 				GibsCreated = true;
 
-				Utils.ModelSlicer.SliceModel( BlockModel, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+				Utils.ModelSlicer.SliceModel( Model, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
 				SetModel( "" );
 				EnableAllCollisions = false;

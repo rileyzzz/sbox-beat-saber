@@ -1,4 +1,5 @@
 using Sandbox;
+using Sandbox.UI;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -34,12 +35,12 @@ namespace BeatSaber
 		const float IncomingObstacleDistance = 1600.0f;
 
 
-		//Network data
+		// Network data
 		[Net] BeatSaberSong.Networked _netSong { get; set; }
 		[Net] BeatSaberLevel.Networked _netLevel { get; set; }
 		[Net] int Difficulty { get; set; } = 0;
 
-		//Level data
+		// Level data
 		public BeatSaberSong Song => _netSong.Song;
 		DifficultyBeatmap Beatmap => Song.DifficultyBeatmapSets[0].DifficultyBeatmaps[Difficulty];
 		public BeatSaberLevel Level => _netLevel.Level;
@@ -53,6 +54,7 @@ namespace BeatSaber
 		bool Playing = false;
 		bool MapGenerated = false;
 
+		// Map data
 		List<Note> ActiveNotes = new();
 		List<Obstacle> ActiveObstacles = new();
 
@@ -68,6 +70,9 @@ namespace BeatSaber
 
 		LaserCluster LeftLasers;
 		LaserCluster RightLasers;
+
+		WorldPanel SongInfo;
+		SongInfoPanel InfoPanel;
 
 		int BeatsPlayed = 0;
 
@@ -136,6 +141,8 @@ namespace BeatSaber
 
 			Playing = true;
 			GenerateMap();
+
+			InfoPanel.SetSong( Song );
 		}
 
 		void SongFinished()
@@ -167,6 +174,11 @@ namespace BeatSaber
 				return;
 
 			MapGenerated = true;
+
+			SongInfo = new WorldPanel();
+			SongInfo.Transform = new Transform( new Vector3(400.0f, 0.0f, 100.0f), Rotation.From( 25.0f, 180.0f, 0.0f ), 4.0f );
+
+			InfoPanel = SongInfo.AddChild<SongInfoPanel>( "infoPanel" );
 
 			LeftBars = new VisualizerBar[numVisualizerBars];
 			RightBars = new VisualizerBar[numVisualizerBars];
@@ -317,6 +329,8 @@ namespace BeatSaber
 		{
 			if ( !IsClient || !Playing )
 				return;
+
+			InfoPanel.Progress.Progress = Stream.FractionElapsed;
 
 			if ( Stream.Finished )
 			{
