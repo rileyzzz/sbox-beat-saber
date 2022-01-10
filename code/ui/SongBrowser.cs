@@ -2,12 +2,27 @@ using Sandbox;
 using Sandbox.UI;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BeatSaber
 {
+	//class PreviewTask
+	//{
+	//	public BeatSaberSong Song;
+	//	public bool Cancel = false;
+
+	//	public PreviewTask( BeatSaberSong song )
+	//	{
+	//		Song = song;
+	//	}
+	//}
+
 	public partial class SongBrowser : Panel
 	{
 		public MusicStream PreviewStream = null;
+		readonly object previewLock = new();
+
+		//PreviewTask previewTask = null;
 
 		Panel SongContainer;
 		DetailsPanel DetailsPanel;
@@ -58,16 +73,30 @@ namespace BeatSaber
 			}
 		}
 
+		// more annoying whitelist/api shit
+		// apparently we can't make this happen in another thread
+		// this is a performance thing so marking it async won't do anything, that will execute async but remain on the main C# thread
+		// there's an issue to sandbox parallel execution using GameTask or some shit https://github.com/Facepunch/sbox-issues/issues/436
+		// but it hasn't been touched in months :)
+		// it's also automatically been closed :)
+		// it's also something only one guy in the discord has bothered to ask about, and FP ignored him :)
+		// so until Facepunch Fixes They Game we're stuck with an annoying as fuck hitch
+		void UpdatePreview( BeatSaberSong song )
+		{
+			lock ( previewLock )
+			{
+				PreviewStream?.Stop();
+				PreviewStream = new MusicStream( song.Directory + song.SongFilename, song.PreviewStartTime, song.PreviewDuration, true );
+				PreviewStream.Play();
+			}
+		}
+
 		void UpdateSelected()
 		{
 			foreach ( var song in Songs )
 				song.SetClass( "selected", song == Selected );
 
-			var sel = Selected.Song;
-
-			//PreviewStream?.Stop();
-			PreviewStream = new MusicStream( sel.Directory + sel.SongFilename, sel.PreviewStartTime, sel.PreviewDuration, true );
-			PreviewStream.Play();
+			UpdatePreview( Selected.Song );
 		}
 	}
 

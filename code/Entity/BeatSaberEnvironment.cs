@@ -82,6 +82,9 @@ namespace BeatSaber
 		WorldPanel ScoreRoot;
 		ScorePanel ScorePanel;
 
+		WorldPanel MultiplierRoot;
+		MultiplierPanel MultiplierPanel;
+
 		int BeatsPlayed = 0;
 
 		int CurrentNote = 0;
@@ -111,6 +114,10 @@ namespace BeatSaber
 					ScorePanel.Score.Text = _score.ToString();
 			}
 		}
+
+		int Multiplier = 1;
+		int MultiplierFrac = 0;
+
 
 		int ColorCycle = 0;
 		Color[] CycleColors = new Color[] {
@@ -221,10 +228,23 @@ namespace BeatSaber
 
 			InfoPanel = InfoRoot.AddChild<SongInfoPanel>( "infoPanel" );
 
+
+			float panelWidth = 144.0f;
+			Vector3 panelPos = new Vector3( 300.0f, 100.0f, 20.0f );
+			Rotation panelRot = Rotation.From( 0.0f, -155.0f, 0.0f );
+
 			ScoreRoot = new WorldPanel();
-			ScoreRoot.Transform = new Transform( new Vector3( 200.0f, 100.0f, 40.0f ), Rotation.From( 0.0f, -155.0f, 0.0f ), 4.0f );
+			ScoreRoot.Transform = new Transform( panelPos - panelRot.Right * (panelWidth / 2), panelRot, 4.0f );
 
 			ScorePanel = ScoreRoot.AddChild<ScorePanel>( "scorePanel" );
+
+			panelPos = new Vector3( 300.0f, -100.0f, 20.0f );
+			panelRot = Rotation.From( 0.0f, 155.0f, 0.0f );
+
+			MultiplierRoot = new WorldPanel();
+			MultiplierRoot.Transform = new Transform( panelPos - panelRot.Right * (panelWidth / 2), panelRot, 4.0f );
+
+			MultiplierPanel = MultiplierRoot.AddChild<MultiplierPanel>( "multiplierPanel" );
 
 			LeftBars = new VisualizerBar[numVisualizerBars];
 			RightBars = new VisualizerBar[numVisualizerBars];
@@ -369,17 +389,41 @@ namespace BeatSaber
 			return new Vector3( GetObjectTimeOffset( obstacle, true ), (2 - obstacle.LineIndex) * UnitSize, 0.0f );
 		}
 
+		void ResetMultiplier()
+		{
+			Multiplier = 1;
+			MultiplierFrac = 0;
+			MultiplierPanel.SetMultiplier( Multiplier, MultiplierFrac );
+		}
+
+		void BumpMultiplier()
+		{
+			if ( Multiplier >= 8 )
+				return;
+
+			if ( ++MultiplierFrac > 3 )
+			{
+				MultiplierFrac = 0;
+				Multiplier *= 2;
+			}
+
+			MultiplierPanel.SetMultiplier( Multiplier, MultiplierFrac );
+		}
+
 		public void NoteHit( int score )
 		{
 			lastHitTime = Time.Now;
 
+			BumpMultiplier();
 			Combo++;
-			Score += score;
+			Score += score * Multiplier;
 		}
 
 		public void NoteMiss()
 		{
 			Combo = 0;
+
+			ResetMultiplier();
 		}
 
 		[Event.Tick]
@@ -489,7 +533,12 @@ namespace BeatSaber
 				{
 					// TODO add a small miss marker
 					// don't play a sound effect because that will be off time
-					NoteMiss();
+					if( !note.Hit )
+					{
+						// if it's still not hit count this as a miss
+						NoteMiss();
+					}
+					
 
 					RemoveNotes.Add( note );
 				}
@@ -511,7 +560,7 @@ namespace BeatSaber
 
 				obstacle.Position = obstacle.Position.WithX( GetObjectTimeOffset( data, true ) );
 
-				if ( obstacleTime <= -data.Duration )
+				if ( obstacleTime <= -data.Duration - LateSliceWindow )
 					RemoveObstacles.Add( obstacle );
 			}
 

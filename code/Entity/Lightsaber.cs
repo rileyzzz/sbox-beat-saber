@@ -208,7 +208,7 @@ namespace BeatSaber
 
 			var hand = Saber.Hand.Hand;
 
-			if (other is Note note)
+			if ( other is Note note && note.CanSlice )
 			{
 				Vector3 normal = Vector3.Cross( Rotation.Up, hand.Velocity.Normal );
 				note.Slice( Position, normal.Normal, hand.Velocity.Normal, Red );

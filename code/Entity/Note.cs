@@ -22,6 +22,9 @@ namespace BeatSaber
 			}
 		}
 
+		// set once intro animation finishes
+		public bool CanSlice = false;
+
 		public bool Hit { get; set; } = false;
 		public bool SoundPlayed { get; set; } = false;
 
@@ -67,7 +70,7 @@ namespace BeatSaber
 		{
 			base.OnSequenceFinished( looped );
 
-
+			CanSlice = true;
 		}
 
 		void Update()
@@ -160,12 +163,16 @@ namespace BeatSaber
 
 		public void Slice( Vector3 origin, Vector3 normal, Vector3 velocity, bool red )
 		{
+			if ( !CanSlice )
+				return;
+
 			Hit = true;
+			CanSlice = false;
 
 			SlicePlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
 			SliceVelocity = velocity;
 
-			BeatSaberEnvironment.Current?.NoteHit( 200 );
+			BeatSaberEnvironment.Current?.NoteHit( 100 );
 		}
 
 		[Event.Tick]

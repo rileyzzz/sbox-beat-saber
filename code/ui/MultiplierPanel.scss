@@ -1,0 +1,57 @@
+
+.multiplierPanel {
+    width: 128px;
+    height: 190px;
+    background-color: #0b0b0ba0;
+    border-radius: 4px;
+    flex-direction: column;
+    text-align: center;
+
+    .multiplier {
+        width: 96px;
+        height: 96px;
+
+        margin: auto;
+
+        border: 4px solid #646464;
+        border-radius: 48px;
+
+        // this doesn't do shit on worldpanels atm
+        // but when transform support is added it should work
+        transform: rotate(-45deg);
+        
+        &.top {
+            border-top-color: white;
+        }
+
+        &.right {
+            border-right-color: white;
+        }
+
+        &.bottom {
+            border-bottom-color: white;
+        }
+
+        &.left {
+            border-left-color: white;
+        }
+
+        .text {
+            width: 100%;
+            height: 32px;
+
+            /*margin: auto;*/
+            margin-top: 20px;
+
+            font-family: Poppins;
+            font-weight: 300;
+
+            font-size: 32px;
+
+            color: white;
+
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+    }
+}
