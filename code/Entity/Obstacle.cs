@@ -44,7 +44,7 @@ namespace BeatSaber
 			var unitSize = BeatSaberEnvironment.UnitSize;
 			var verticalOffset = BeatSaberEnvironment.VerticalOffset;
 			// note speed affects the distance between note blocks
-			var noteSpeed = BeatSaberEnvironment.NoteSpeed;
+			var noteSpeed = BeatSaberEnvironment.Current.NoteSpeed;
 
 			Vector3 offset = new Vector3( 0.0f, 0.0f, (Data.Type == ObstacleType.FullHeight ? 0 : 2 * unitSize) + verticalOffset );
 			Vector3 extent = new Vector3( Data.Duration * unitSize * noteSpeed, -Data.Width * unitSize, (Data.Type == ObstacleType.FullHeight ? 3 : 1) * unitSize );

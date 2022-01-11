@@ -68,9 +68,14 @@ namespace BeatSaber
 
 			var rot = Rotation.FromYaw( 180.0f ) * GetDirectionRotation( Data.Direction );
 
-			var up = rot.Up;
-			var forward = (Local.Pawn.EyePos - Position).WithZ( 0 ).Normal;
-			Rotation = Rotation.Slerp( rot, Rotation.LookAt( forward, up ), 0.7f );
+			if( CanSlice )
+			{
+				var up = rot.Up;
+				var forward = (Local.Pawn.EyePos - Position).WithZ( 0 ).Normal;
+				rot = Rotation.Slerp( rot, Rotation.LookAt( forward, up ), 0.7f );
+			}
+
+			Rotation = rot;
 		}
 
 		//Vector3 GetDirectionVector( CutDirection dir )
@@ -130,7 +135,7 @@ namespace BeatSaber
 		{
 			//either AddMesh or AddCollisionHull likes to crash if the mesh is really small
 
-			if ( vertices.Length <= 3 )
+			if ( vertices.Length <= 6 )
 				return;
 			Log.Info( "Creating gib with " + vertices.Length + " vertices." );
 

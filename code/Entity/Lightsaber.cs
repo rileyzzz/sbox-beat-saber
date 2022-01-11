@@ -212,6 +212,16 @@ namespace BeatSaber
 			{
 				Vector3 normal = Vector3.Cross( Rotation.Up, hand.Velocity.Normal );
 				note.Slice( Position, normal.Normal, hand.Velocity.Normal, Red );
+
+				//var p = Particles.Create( "particles/saber_slice.vpcf", this, false );
+				var p = Particles.Create( "particles/saber_slice.vpcf", this );
+
+				// set particle color
+				var color = Red ? Color.Red : Color.Blue;
+				p.SetPosition( 1, new Vector3( color.r, color.g, color.b ) );
+
+				//var p = Particles.Create( "particles/saber_slice.vpcf", this, "particles" );
+
 			}
 		}
 

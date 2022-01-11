@@ -28,7 +28,8 @@ namespace BeatSaber
 		const float LateSliceWindow = 1.0f;
 
 		// note speedup without sacrificing BPM
-		public const float NoteSpeed = 8.0f;
+		//public const float NoteSpeed = 6.0f;
+		public float NoteSpeed => 800.0f / Song.BPM;
 
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
@@ -37,8 +38,11 @@ namespace BeatSaber
 		// distance from origin to spawn note miss particles
 		const float MissParticleDistance = 400.0f;
 
-		// amount of time before hit noises stop
-		const float HitTolerance = 1.0f;
+		// amount of notes we consider a 'streak'
+		// if we're in a streak we'll keeps playing hit sounds
+		// even if the notes aren't hit strictly before their sound is supposed to be played
+		// it will reset the streak and start playing miss sounds once we have a definite miss (note leaves playable region or player hits the wrong side)
+		const int HitTolerance = 4;
 
 		// Helpers
 		public static BeatSaberEnvironment Current = null;
@@ -130,7 +134,8 @@ namespace BeatSaber
 			Color.Magenta
 		};
 
-		float lastHitTime = 0.0f;
+		//float lastMissTime = 0.0f;
+		int notesSinceLastMiss = HitTolerance;
 
 		public BeatSaberEnvironment()
 		{
@@ -415,7 +420,8 @@ namespace BeatSaber
 
 		public void NoteHit( int score )
 		{
-			lastHitTime = Time.Now;
+			//lastHitTime = Time.Now;
+			notesSinceLastMiss++;
 
 			BumpMultiplier();
 			Combo++;
@@ -424,6 +430,8 @@ namespace BeatSaber
 
 		public void NoteMiss( Note note )
 		{
+			notesSinceLastMiss = 0;
+
 			Combo = 0;
 			ResetMultiplier();
 
@@ -450,7 +458,8 @@ namespace BeatSaber
 				return;
 			}
 
-			float timeSinceLastHit = Time.Now - lastHitTime;
+			//float timeSinceLastHit = Time.Now - lastHitTime;
+			//float timeSinceLastMiss = Time.Now - lastMissTime;
 
 
 			if( (int)BeatsElapsed > BeatsPlayed )
@@ -536,7 +545,7 @@ namespace BeatSaber
 
 					if( data.Type != NoteType.Bomb )
 					{
-						if ( note.Hit || timeSinceLastHit <= HitTolerance )
+						if ( note.Hit || notesSinceLastMiss >= HitTolerance )
 							newHitThisTick = true;
 						else
 							newMissThisTick = true;
