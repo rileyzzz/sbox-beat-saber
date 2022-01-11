@@ -61,6 +61,18 @@ namespace BeatSaber
 			return Rotation.FromRoll( GetDirectionAngle( Data.Direction ) );
 		}
 
+		void UpdateRotation()
+		{
+			if ( Local.Pawn == null )
+				return;
+
+			var rot = Rotation.FromYaw( 180.0f ) * GetDirectionRotation( Data.Direction );
+
+			var up = rot.Up;
+			var forward = (Local.Pawn.EyePos - Position).WithZ( 0 ).Normal;
+			Rotation = Rotation.Slerp( rot, Rotation.LookAt( forward, up ), 0.7f );
+		}
+
 		//Vector3 GetDirectionVector( CutDirection dir )
 		//{
 		//	return Rotation.From( 0.0f, 180.0f, GetDirectionAngle( Data.Direction ) ).Down;
@@ -86,7 +98,7 @@ namespace BeatSaber
 				//this causes a crash for whatever reason
 				//CollisionGroup = CollisionGroup.Trigger;
 
-				Rotation = Rotation.FromYaw( 180.0f ) * GetDirectionRotation( Data.Direction );
+				UpdateRotation();
 
 				bool red = Data.Type == NoteType.Red;
 				bool angle = Data.Direction != CutDirection.Any;
@@ -190,39 +202,45 @@ namespace BeatSaber
 			if ( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, SliceVelocity );
 			if ( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, SliceVelocity );
 
-
 			if(Data.Type != NoteType.Bomb)
 			{
-				Vector2 Slice2D = new Vector2( velocity.y, velocity.z );
-
-				var up = Rotation.Up;
-				Vector2 Up2D = new Vector2( Rotation.Down.y, Rotation.Down.z );
-
-				float angle = (float)Math.Abs( Math.Atan2( (double)Slice2D.y, (double)Slice2D.x ) - Math.Atan2( (double)Up2D.y, (double)Up2D.x ) );
-
-				//const float maxAngle = (float)(Math.PI / 4.0);
-				float maxAngle = (65.0f).DegreeToRadian();
-
-				//DebugOverlay.Text( Position, angle.RadianToDegree().ToString(), Color.Green, 20.0f );
-				//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Up2D.x, Up2D.y) * 20.0f, Color.Blue, 20.0f, false );
-				//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Slice2D.x, Slice2D.y) * 20.0f, Color.Green, 20.0f, false );
-
-				if ( angle > maxAngle || red != (Data.Type == NoteType.Red) )
-				{
+				if( red != (Data.Type == NoteType.Red) )
 					BeatSaberEnvironment.Current?.NoteMiss( this );
+
+				float score = Lerp( 0.0f, 100.0f, Math.Clamp( velocity.Length / 2.0f, 0.0f, 1.0f ) );
+
+				if ( Data.Direction == CutDirection.Any )
+				{
+					BeatSaberEnvironment.Current?.NoteHit( (int)score + 15 );
 				}
 				else
 				{
-					float score = Lerp( 1.0f, 0.1f, angle / maxAngle ) * 100;
+					Vector2 Slice2D = new Vector2( velocity.y, velocity.z );
 
-					if ( velocity.Length > 2.0f )
+					var up = Rotation.Up;
+					Vector2 Up2D = new Vector2( Rotation.Down.y, Rotation.Down.z );
+
+					float angle = (float)Math.Abs( Math.Atan2( (double)Slice2D.y, (double)Slice2D.x ) - Math.Atan2( (double)Up2D.y, (double)Up2D.x ) );
+
+					//const float maxAngle = (float)(Math.PI / 4.0);
+					float maxAngle = (65.0f).DegreeToRadian();
+
+					//DebugOverlay.Text( Position, angle.RadianToDegree().ToString(), Color.Green, 20.0f );
+					//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Up2D.x, Up2D.y) * 20.0f, Color.Blue, 20.0f, false );
+					//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Slice2D.x, Slice2D.y) * 20.0f, Color.Green, 20.0f, false );
+
+					if ( angle > maxAngle )
 					{
-						Log.Info( "good hit" );
-						score += 10;
+						BeatSaberEnvironment.Current?.NoteMiss( this );
 					}
-
-					BeatSaberEnvironment.Current?.NoteHit( (int)score );
+					else
+					{
+						score += Lerp( 1.0f, 0.1f, angle / maxAngle ) * 15;
+						BeatSaberEnvironment.Current?.NoteHit( (int)score );
+					}
 				}
+
+
 			}
 			else
 			{
@@ -233,6 +251,8 @@ namespace BeatSaber
 		[Event.Tick]
 		void Tick()
 		{
+			UpdateRotation();
+
 			//if(Hit && !GibsCreated)
 			//{
 			//	GibsCreated = true;

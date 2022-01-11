@@ -12,7 +12,7 @@ namespace BeatSaber
 		// Config
 
 		//size of a grid unit
-		public const float UnitSize = 23.0f;
+		public const float UnitSize = 24.0f;
 
 		public const float VerticalOffset = UnitSize / 2.0f;
 
@@ -28,7 +28,7 @@ namespace BeatSaber
 		const float LateSliceWindow = 1.0f;
 
 		// note speedup without sacrificing BPM
-		public const float NoteSpeed = 4.0f;
+		public const float NoteSpeed = 8.0f;
 
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
@@ -114,7 +114,7 @@ namespace BeatSaber
 			{
 				_score = value;
 				if ( ScorePanel != null )
-					ScorePanel.Score.Text = _score.ToString();
+					ScorePanel.TargetScore = _score;
 			}
 		}
 
