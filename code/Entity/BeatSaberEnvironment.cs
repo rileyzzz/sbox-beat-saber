@@ -12,7 +12,7 @@ namespace BeatSaber
 		// Config
 
 		//size of a grid unit
-		public const float UnitSize = 22.0f;
+		public const float UnitSize = 23.0f;
 
 		public const float VerticalOffset = UnitSize / 2.0f;
 
@@ -33,6 +33,9 @@ namespace BeatSaber
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
 		const float IncomingObstacleDistance = 1600.0f;
+
+		// distance from origin to spawn note miss particles
+		const float MissParticleDistance = 400.0f;
 
 		// amount of time before hit noises stop
 		const float HitTolerance = 1.0f;
@@ -419,10 +422,17 @@ namespace BeatSaber
 			Score += score * Multiplier;
 		}
 
-		public void NoteMiss()
+		public void NoteMiss( Note note )
 		{
 			Combo = 0;
+			ResetMultiplier();
 
+			Particles.Create( "particles/note_miss.vpcf", note.Position.WithX( MissParticleDistance ) );
+		}
+
+		public void BombHit()
+		{
+			Combo = 0;
 			ResetMultiplier();
 		}
 
@@ -506,6 +516,7 @@ namespace BeatSaber
 
 			bool newHitThisTick = false;
 			bool newMissThisTick = false;
+			bool newExplosionThisTick = false;
 
 			//stale notes that need to be removed
 			List<Note> RemoveNotes = new();
@@ -523,22 +534,26 @@ namespace BeatSaber
 				{
 					note.SoundPlayed = true;
 
-					if ( note.Hit || timeSinceLastHit <= HitTolerance )
-						newHitThisTick = true;
+					if( data.Type != NoteType.Bomb )
+					{
+						if ( note.Hit || timeSinceLastHit <= HitTolerance )
+							newHitThisTick = true;
+						else
+							newMissThisTick = true;
+					}
 					else
-						newMissThisTick = true;
+						newExplosionThisTick = true;
 				}
 
 				if( noteTime <= -LateSliceWindow)
 				{
 					// TODO add a small miss marker
 					// don't play a sound effect because that will be off time
-					if( !note.Hit )
+					if( data.Type != NoteType.Bomb && !note.Hit )
 					{
 						// if it's still not hit count this as a miss
-						NoteMiss();
+						NoteMiss( note );
 					}
-					
 
 					RemoveNotes.Add( note );
 				}

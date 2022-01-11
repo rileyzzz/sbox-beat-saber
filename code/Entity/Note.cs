@@ -120,6 +120,7 @@ namespace BeatSaber
 
 			if ( vertices.Length <= 3 )
 				return;
+			Log.Info( "Creating gib with " + vertices.Length + " vertices." );
 
 			var gib = new PropGib
 			{
@@ -131,6 +132,8 @@ namespace BeatSaber
 			};
 
 			gib.Model = Model.Builder.AddMesh( mesh ).AddCollisionHull(vertices).Create();
+			Log.Info("Gib created.");
+
 			gib.SetInteractsAs( CollisionLayer.Debris );
 
 			//gib.Velocity = GetDirectionVector(Data.Direction) * 500.0f;
@@ -161,6 +164,11 @@ namespace BeatSaber
 			gib.Delete();
 		}
 
+		float Lerp( float a, float b, float f )
+		{
+			return a + f * (b - a);
+		}
+
 		public void Slice( Vector3 origin, Vector3 normal, Vector3 velocity, bool red )
 		{
 			if ( !CanSlice )
@@ -172,27 +180,72 @@ namespace BeatSaber
 			SlicePlane = new Plane( Transform.PointToLocal(origin), Transform.NormalToLocal(normal) );
 			SliceVelocity = velocity;
 
-			BeatSaberEnvironment.Current?.NoteHit( 100 );
+
+			Utils.ModelSlicer.SliceModel( Model, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+
+			SetModel( "" );
+			EnableAllCollisions = false;
+
+
+			if ( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, SliceVelocity );
+			if ( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, SliceVelocity );
+
+
+			if(Data.Type != NoteType.Bomb)
+			{
+				Vector2 Slice2D = new Vector2( velocity.y, velocity.z );
+
+				var up = Rotation.Up;
+				Vector2 Up2D = new Vector2( Rotation.Down.y, Rotation.Down.z );
+
+				float angle = (float)Math.Abs( Math.Atan2( (double)Slice2D.y, (double)Slice2D.x ) - Math.Atan2( (double)Up2D.y, (double)Up2D.x ) );
+
+				//const float maxAngle = (float)(Math.PI / 4.0);
+				float maxAngle = (65.0f).DegreeToRadian();
+
+				//DebugOverlay.Text( Position, angle.RadianToDegree().ToString(), Color.Green, 20.0f );
+				//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Up2D.x, Up2D.y) * 20.0f, Color.Blue, 20.0f, false );
+				//DebugOverlay.Line( Position, Position + new Vector3(0.0f, Slice2D.x, Slice2D.y) * 20.0f, Color.Green, 20.0f, false );
+
+				if ( angle > maxAngle || red != (Data.Type == NoteType.Red) )
+				{
+					BeatSaberEnvironment.Current?.NoteMiss( this );
+				}
+				else
+				{
+					float score = Lerp( 1.0f, 0.1f, angle / maxAngle ) * 100;
+
+					if ( velocity.Length > 2.0f )
+					{
+						Log.Info( "good hit" );
+						score += 10;
+					}
+
+					BeatSaberEnvironment.Current?.NoteHit( (int)score );
+				}
+			}
+			else
+			{
+				BeatSaberEnvironment.Current?.BombHit();
+			}
 		}
 
 		[Event.Tick]
 		void Tick()
 		{
-			// we can't do this in slice because that happens in the physics thread
-			// seems like creating props there likes to crash the game
-			if(Hit && !GibsCreated)
-			{
-				GibsCreated = true;
+			//if(Hit && !GibsCreated)
+			//{
+			//	GibsCreated = true;
 
-				Utils.ModelSlicer.SliceModel( Model, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
+			//	//Utils.ModelSlicer.SliceModel( Model, SliceMaterial, SlicePlane, out Mesh FrontMesh, out Vector3[] FrontVertices, out Mesh BackMesh, out Vector3[] BackVertices );
 
-				SetModel( "" );
-				EnableAllCollisions = false;
+			//	//SetModel( "" );
+			//	//EnableAllCollisions = false;
 
 
-				if ( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, SliceVelocity );
-				if ( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, SliceVelocity );
-			}
+			//	//if ( FrontMesh != null ) CreateGib( "front", FrontMesh, FrontVertices, SliceVelocity );
+			//	//if ( BackMesh != null ) CreateGib( "back", BackMesh, BackVertices, SliceVelocity );
+			//}
 		}
 
 		//void DebugDrawPlane(Plane plane)
