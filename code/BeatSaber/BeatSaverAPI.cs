@@ -150,16 +150,17 @@ namespace BeatSaber
 					var mapPath = map.DownloadDirectory;
 					fs.CreateDirectory( mapPath );
 
-					//using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
+					using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
 					{
-						//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
-						var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
+						// this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
+						//var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
+						// wow matt fixed it holy based https://github.com/Facepunch/sbox-issues/issues/1463
 
 						//foreach(var entry in zip.Entries)
-						for ( int i = 0; i < zip.Count; i++ )
+						for ( int i = 0; i < zip.Entries.Count; i++ )
 						{
-							//var entry = zip.Entries[i];
-							var entry = zip[i];
+							var entry = zip.Entries[i];
+							//var entry = zip[i];
 							var ext = entry.Name.Substring( entry.Name.LastIndexOf( "." ) );
 
 							if ( !IsInWhitelist( ext ) )
@@ -172,7 +173,7 @@ namespace BeatSaber
 							using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )
 							{
 								data.CopyTo( o );
-								info.Progress = (float)(i + 1) / zip.Count;
+								info.Progress = (float)(i + 1) / zip.Entries.Count;
 								Log.Info( "Wrote file " + mapPath + "/" + entry.FullName );
 							}
 						}
