@@ -39,20 +39,20 @@ namespace BeatSaber
 			Saber.Owner = this;
 			Saber.Blade.Red = IsLeft;
 
-			//Saber.Parent = this;
+			Saber.Parent = this;
 
 			//we want physics to interpolate the motion of the lightsabers separately so notes don't get missed
-			Saber.Position = Hand.Transform.Position;
-			Saber.Rotation = Hand.Transform.Rotation;
+			//Saber.Position = Hand.Transform.Position;
+			//Saber.Rotation = Hand.Transform.Rotation;
 
-			PhysicsJoint.Weld
-				//.From( this, 0 )
-				.From( PhysicsBody, new Vector3() )
-				.To( Saber.PhysicsBody, new Vector3() )
-				.WithBlockSolverEnabled()
-				//.WithLinearSpring( 8.0f, 0.8f, 300.0f )
-				//.WithLinearSpring( 8.0f, 0.8f, 0.0f )
-				.Create();
+			//PhysicsJoint.Weld
+			//	//.From( this, 0 )
+			//	.From( PhysicsBody, new Vector3() )
+			//	.To( Saber.PhysicsBody, new Vector3() )
+			//	.WithBlockSolverEnabled()
+			//	//.WithLinearSpring( 8.0f, 0.8f, 300.0f )
+			//	//.WithLinearSpring( 8.0f, 0.8f, 0.0f )
+			//	.Create();
 
 			//Saber = new Lightsaber();
 			//Saber.Parent = this;

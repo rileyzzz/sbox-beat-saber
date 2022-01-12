@@ -38,7 +38,7 @@ namespace BeatSaber
 			base.Spawn();
 
 			SetModel( "models/sabers/basic_saber.vmdl" );
-			SetupPhysicsFromModel( PhysicsMotionType.Dynamic );
+			SetupPhysicsFromModel( PhysicsMotionType.Static );
 
 
 			Log.Info( "saber spawn" );
