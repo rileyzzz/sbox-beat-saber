@@ -81,6 +81,8 @@ namespace BeatSaber
 		const int numSpotlights = 10;
 		BPMSpotlight[] Spotlights;
 
+		RingGroup Rings;
+
 		List<AwesomePillar> Pillars = new();
 
 		LaserCluster LeftLasers;
@@ -286,6 +288,8 @@ namespace BeatSaber
 
 				Spotlights[i] = light;
 			}
+
+			Rings = new RingGroup() { Position = new Vector3( 400.0f, 0.0f, 0.0f ) };
 
 			LeftLasers = new LaserCluster() { Position = new Vector3( 2800.0f, 400.0f, -1400.0f ) };
 			RightLasers = new LaserCluster() { Position = new Vector3( 2800.0f, -400.0f, -1400.0f ) };
@@ -498,6 +502,8 @@ namespace BeatSaber
 					case EventType.RightRotatingLasers: RightLasers.Event( (LightEventType)evt.Value ); break;
 					case EventType.LeftRotatingLaserSpeed: LeftLasers.RotationSpeedMultiplier = evt.Value; break;
 					case EventType.RightRotatingLaserSpeed: RightLasers.RotationSpeedMultiplier = evt.Value; break;
+					case EventType.RingSpin: Rings.Spin(); break;
+					case EventType.RingZoom: Rings.Zoom(); break;
 					default: break;
 				}
 			}
@@ -608,8 +614,8 @@ namespace BeatSaber
 					)
 					ObstacleHit();
 
-				DebugOverlay.Line( Input.VR.Head.Position, Input.VR.Head.Position + new Vector3(40.0f, 0.0f, 0.0f) );
-				DebugOverlay.Box( obstacle.WorldSpaceBounds.Mins, obstacle.WorldSpaceBounds.Maxs );
+				//DebugOverlay.Line( Input.VR.Head.Position, Input.VR.Head.Position + new Vector3(40.0f, 0.0f, 0.0f) );
+				//DebugOverlay.Box( obstacle.WorldSpaceBounds.Mins, obstacle.WorldSpaceBounds.Maxs );
 
 				if ( obstacleTime <= -data.Duration - LateSliceWindow )
 					RemoveObstacles.Add( obstacle );

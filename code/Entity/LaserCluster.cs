@@ -65,7 +65,7 @@ namespace BeatSaber
 			for( int i = 0; i < numLasers; i++ )
 			{
 				Lasers[i] = new ModelEntity() { Parent = this };
-				Lasers[i].SetModel( LaserModel );
+				Lasers[i].Model = LaserModel;
 				Lasers[i].RenderColor = Black;
 				//Lasers[i].Rotation = Rotation.From( 45.0f, ((float)i / numLasers) * 360.0f, 0.0f );
 			}
