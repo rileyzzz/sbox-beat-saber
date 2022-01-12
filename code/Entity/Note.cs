@@ -71,7 +71,8 @@ namespace BeatSaber
 			if( CanSlice )
 			{
 				var up = rot.Up;
-				var forward = (Local.Pawn.EyePos - Position).WithZ( 0 ).Normal;
+				//var forward = (Local.Pawn.EyePos - Position).WithZ( 0 ).Normal;
+				var forward = (Input.VR.Head.Position - Position).WithZ( 0 ).Normal;
 				rot = Rotation.Slerp( rot, Rotation.LookAt( forward, up ), 0.7f );
 			}
 
@@ -191,6 +192,8 @@ namespace BeatSaber
 			if ( !CanSlice )
 				return;
 
+			Log.Info( "Slice red " + red.ToString() );
+
 			Hit = true;
 			CanSlice = false;
 
@@ -210,7 +213,10 @@ namespace BeatSaber
 			if(Data.Type != NoteType.Bomb)
 			{
 				if( red != (Data.Type == NoteType.Red) )
+				{
 					BeatSaberEnvironment.Current?.NoteMiss( this );
+					return;
+				}
 
 				float score = Lerp( 0.0f, 100.0f, Math.Clamp( velocity.Length / 2.0f, 0.0f, 1.0f ) );
 

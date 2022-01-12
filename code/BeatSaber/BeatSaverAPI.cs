@@ -19,9 +19,11 @@ namespace BeatSaber
 		}
 
 
-		// this probably ain't thread safe, but that shit ain't whitelisted so too bad
+		// tasks happen on the same thread as everything else so we probably don't need this mutex
+		// adding it just in case
 		public class RequestInfo
 		{
+			public object mutex = new();
 			public bool Cancel = false;
 			public bool Complete = false;
 			public float Progress = 0.0f;
@@ -35,14 +37,17 @@ namespace BeatSaber
 
 			var req = task.GetStringAsync();
 			req.ContinueWith(response => {
-				if ( !response.IsCompleted || info.Cancel )
-					return;
+				lock( info.mutex )
+				{
+					if ( !response.IsCompleted || info.Cancel )
+						return;
 
-				//Log.Info( "response " + req.Result );
-				var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
-				callback( data.Maps );
+					//Log.Info( "response " + req.Result );
+					var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
+					callback( data.Maps );
 
-				info.Complete = true;
+					info.Complete = true;
+				}
 			} );
 
 			return info;
@@ -88,14 +93,17 @@ namespace BeatSaber
 			var task = new Sandbox.Internal.Http( new Uri( url ) );
 			var req = task.GetStringAsync();
 			req.ContinueWith( response => {
-				if ( !response.IsCompleted || info.Cancel )
-					return;
+				lock( info.mutex )
+				{
+					if ( !response.IsCompleted || info.Cancel )
+						return;
 
-				Log.Info( "response was complete for " + url );
-				var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
-				callback( data.Maps );
+					Log.Info( "response was complete for " + url );
+					var data = JsonSerializer.Deserialize<MapDetailResponse>( response.Result );
+					callback( data.Maps );
 
-				info.Complete = true;
+					info.Complete = true;
+				}
 			} );
 
 			return info;
@@ -127,55 +135,58 @@ namespace BeatSaber
 			var task = new Sandbox.Internal.Http( new Uri( mapURL ) );
 
 			task.GetStreamAsync().ContinueWith(response => {
-				if ( !response.IsCompleted || info.Cancel )
-					return;
-
-				Stream stream = response.Result;
-				
-				var fs = FileSystem.Data;
-
-				if ( !fs.DirectoryExists( "download" ) )
-					fs.CreateDirectory("download");
-
-				var mapPath = map.DownloadDirectory;
-				fs.CreateDirectory( mapPath );
-
-				//using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
+				lock ( info.mutex )
 				{
-					//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
-					var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
+					if ( !response.IsCompleted || info.Cancel )
+						return;
 
-					//foreach(var entry in zip.Entries)
-					for ( int i = 0; i < zip.Count; i++ )
+					Stream stream = response.Result;
+
+					var fs = FileSystem.Data;
+
+					if ( !fs.DirectoryExists( "download" ) )
+						fs.CreateDirectory( "download" );
+
+					var mapPath = map.DownloadDirectory;
+					fs.CreateDirectory( mapPath );
+
+					//using ( var zip = new ZipArchive( stream, ZipArchiveMode.Read ) )
 					{
-						//var entry = zip.Entries[i];
-						var entry = zip[i];
-						var ext = entry.Name.Substring( entry.Name.LastIndexOf( "." ) );
+						//this is dumb. ZipArchive* should be whitelisted, not ZipArchive.*
+						var zip = new ZipArchive( stream, ZipArchiveMode.Read ).Entries;
 
-						if(!IsInWhitelist(ext))
+						//foreach(var entry in zip.Entries)
+						for ( int i = 0; i < zip.Count; i++ )
 						{
-							Log.Warning("File extension not in whitelist: " + entry.FullName + " for song " + map.Name);
-							continue;
-						}
+							//var entry = zip.Entries[i];
+							var entry = zip[i];
+							var ext = entry.Name.Substring( entry.Name.LastIndexOf( "." ) );
 
-						using ( var data = entry.Open() )
-						using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )
-						{
-							data.CopyTo( o );
-							info.Progress = (float)(i + 1) / zip.Count;
-							Log.Info( "Wrote file " + mapPath + "/" + entry.FullName );
+							if ( !IsInWhitelist( ext ) )
+							{
+								Log.Warning( "File extension not in whitelist: " + entry.FullName + " for song " + map.Name );
+								continue;
+							}
+
+							using ( var data = entry.Open() )
+							using ( var o = fs.OpenWrite( mapPath + "/" + entry.FullName ) )
+							{
+								data.CopyTo( o );
+								info.Progress = (float)(i + 1) / zip.Count;
+								Log.Info( "Wrote file " + mapPath + "/" + entry.FullName );
+							}
 						}
 					}
+
+					Log.Info( "Download complete." );
+
+					// refresh our song list
+					if ( Game.Current is not BeatSaberGame game )
+						return;
+					game.LoadSongs();
+
+					info.Complete = true;
 				}
-
-				Log.Info( "Download complete." );
-
-				// refresh our song list
-				if ( Game.Current is not BeatSaberGame game )
-					return;
-				game.LoadSongs();
-
-				info.Complete = true;
 			} );
 
 			return info;

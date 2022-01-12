@@ -18,7 +18,7 @@ namespace NVorbis.Ogg
         private bool _lastWasPeek;
 
         //private Memory<byte> _packetBuf;
-		// TODO get someone to whitelist Memory
+		// TODO get someone to whitelist Memory?
         private byte[] _packetBuf;
 
         private int _dataIndex;

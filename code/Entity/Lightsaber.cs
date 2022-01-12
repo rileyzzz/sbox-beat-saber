@@ -7,8 +7,8 @@ namespace BeatSaber
 {
 	public partial class Lightsaber : ModelEntity
 	{
-		//[Net] public AnimEntity Blade { get; set; }
-		public BladeEntity Blade { get; set; }
+		[Net] public BladeEntity Blade { get; set; }
+		//public BladeEntity Blade { get; set; }
 
 		public VRHand Hand => Owner as VRHand;
 

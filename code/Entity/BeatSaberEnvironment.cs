@@ -29,7 +29,7 @@ namespace BeatSaber
 
 		// note speedup without sacrificing BPM
 		//public const float NoteSpeed = 6.0f;
-		public float NoteSpeed => 800.0f / Song.BPM;
+		public float NoteSpeed => 600.0f / Song.BPM;
 
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
@@ -42,6 +42,9 @@ namespace BeatSaber
 		// if we're in a streak we'll keeps playing hit sounds
 		// even if the notes aren't hit strictly before their sound is supposed to be played
 		// it will reset the streak and start playing miss sounds once we have a definite miss (note leaves playable region or player hits the wrong side)
+		// if this is too high players will notice the lack of hit sounds if they hit anything a bit late before they're in a streak
+		// if it's too low players will start noticing the hit sounds even when they haven't hit notes
+		// not sure this is exactly what the original game does, but it seems like a decent way of dealing with sound timing to keep things synchronized with the BPM
 		const int HitTolerance = 4;
 
 		// Helpers
@@ -309,7 +312,7 @@ namespace BeatSaber
 			//DebugOverlay.Line( new Vector3( 0.0f, -100.0f, 0.0f ), new Vector3( 0.0f, 100.0f, 0.0f ), 100.0f );
 			//DebugOverlay.Line( new Vector3( -100.0f, 0.0f, 0.0f ), new Vector3( 100.0f, 0.0f, 0.0f ), 100.0f );
 
-			DrawDebugGrid();
+			//DrawDebugGrid();
 
 			//var test = new ModelEntity();
 			//var mesh = new Mesh( Material.Load( "materials/obstacle.vmat" ) );
@@ -439,6 +442,12 @@ namespace BeatSaber
 		}
 
 		public void BombHit()
+		{
+			Combo = 0;
+			ResetMultiplier();
+		}
+
+		public void ObstacleHit()
 		{
 			Combo = 0;
 			ResetMultiplier();
@@ -583,6 +592,24 @@ namespace BeatSaber
 				float obstacleTime = data.Time - BeatsElapsed;
 
 				obstacle.Position = obstacle.Position.WithX( GetObjectTimeOffset( data, true ) );
+
+				// Local.Client.IsUsingVr is false on clients, even when you're in VR!
+				// Wow!
+
+				// we cant do this :)
+				// obstacle.WorldSpaceBounds.Contains( Input.VR.Head.Position )
+				// could just construct a new BBox but that seems goofy
+				if ( Input.VR.Head.Position.x >= obstacle.WorldSpaceBounds.Mins.x &&
+					Input.VR.Head.Position.y >= obstacle.WorldSpaceBounds.Mins.y &&
+					Input.VR.Head.Position.z >= obstacle.WorldSpaceBounds.Mins.z &&
+					Input.VR.Head.Position.x < obstacle.WorldSpaceBounds.Maxs.x &&
+					Input.VR.Head.Position.y < obstacle.WorldSpaceBounds.Maxs.y &&
+					Input.VR.Head.Position.z < obstacle.WorldSpaceBounds.Maxs.z
+					)
+					ObstacleHit();
+
+				DebugOverlay.Line( Input.VR.Head.Position, Input.VR.Head.Position + new Vector3(40.0f, 0.0f, 0.0f) );
+				DebugOverlay.Box( obstacle.WorldSpaceBounds.Mins, obstacle.WorldSpaceBounds.Maxs );
 
 				if ( obstacleTime <= -data.Duration - LateSliceWindow )
 					RemoveObstacles.Add( obstacle );

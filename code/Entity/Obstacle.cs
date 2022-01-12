@@ -67,9 +67,9 @@ namespace BeatSaber
 				var vb = new VertexBuffer();
 				vb.Init( true );
 				vb.AddCube( new Vector3(0.0f, 0.0f, origin.z), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
-				vb.AddCube( new Vector3(extent.x, 0.0f, origin.z), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
-				vb.AddCube( new Vector3(0.0f, extent.y, origin.z), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
-				vb.AddCube( new Vector3(extent.x, extent.y, origin.z), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
+				vb.AddCube( new Vector3( extent.x, 0.0f, origin.z ), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
+				vb.AddCube( new Vector3( 0.0f, extent.y, origin.z ), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
+				vb.AddCube( new Vector3( extent.x, extent.y, origin.z ), new Vector3( outlineThickness, outlineThickness, extent.z ), new Rotation() );
 
 				vb.AddCube( new Vector3( origin.x, 0.0f, offset.z ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
 				vb.AddCube( new Vector3( origin.x, extent.y, offset.z ), new Vector3( extent.x, outlineThickness, outlineThickness ), new Rotation() );
@@ -84,7 +84,8 @@ namespace BeatSaber
 				outlineMesh.CreateBuffers( vb );
 			}
 
-			Model = Model.Builder.AddMesh( mesh ).AddMesh(outlineMesh).Create();
+			Model = Model.Builder.AddMesh( mesh ).AddMesh(outlineMesh).AddCollisionBox( extent / 2, origin ).Create();
+			SetupPhysicsFromModel( PhysicsMotionType.Static );
 		}
 	}
 }

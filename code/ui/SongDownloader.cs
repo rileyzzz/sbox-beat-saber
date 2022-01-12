@@ -182,8 +182,9 @@ namespace BeatSaber
 
 			Title.Text = Map.Name;
 			Description.Text = Map.Description;
-
-			Cover.SetTexture( Map.Versions[0].CoverURL );
+			
+			var coverTexture = Texture.Load( Map.Versions[0].CoverURL );
+			Cover.Texture = coverTexture;
 		}
 	}
 
