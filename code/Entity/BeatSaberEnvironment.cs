@@ -11,13 +11,20 @@ namespace BeatSaber
 	{
 		// Config
 
+		const float MetersToInches = 39.3701f;
+
 		//size of a grid unit
-		public const float UnitSize = 24.0f;
+		//public const float UnitSize = 23.0f;
+		// according to the highly reputable beat saber discord notes are 0.6m and layers are 0.8m
+		// that seems wack though so we're eyeballing it
+		public const float UnitSize = 0.6f * MetersToInches;
 
 		public const float VerticalOffset = UnitSize / 2.0f;
 
 		// number of beats the user has to hit the note
-		const float NotePlayableWindow = 2.0f;
+		//const float NotePlayableWindow = 2.0f;
+		// https://kivalevan.me/BeatSaber-MappingUtility/
+		float HJD => Max(0.25f, CalcHJD() + Beatmap.NoteJumpStartBeatOffset);
 
 		// amount of time between note 'incoming' and when it becomes playable
 		//const float NoteIncomingWindow = 1.0f;
@@ -25,11 +32,15 @@ namespace BeatSaber
 		float NoteIncomingWindow => (20.0f / 10.0f) * BeatsPerSecond;
 
 		// number of beats the note lingers
-		const float LateSliceWindow = 1.0f;
+		//const float LateSliceWindow = 1.0f;
+		float LateSliceWindow => HJD;
 
 		// note speedup without sacrificing BPM
-		//public const float NoteSpeed = 6.0f;
-		public float NoteSpeed => 600.0f / Song.BPM;
+		// this is in m/s so convert to in/s
+		public float NoteSpeed => Beatmap.NoteJumpSpeed * MetersToInches;
+		public float NoteSpeedMeters => Beatmap.NoteJumpSpeed;
+		//public float NoteSpeed => Beatmap.NoteJumpSpeed;
+
 
 		// how far away should notes come from
 		//const float IncomingNoteDistance = 400.0f;
@@ -63,6 +74,9 @@ namespace BeatSaber
 		float BeatsPerSecond => Song.BPM / 60.0f;
 		float BeatsElapsed => Stream.TimeElapsed * BeatsPerSecond;
 
+		// (in/s) / (b/s) -> in/b
+		public float DistPerBeat => NoteSpeed / BeatsPerSecond;
+		public float DistPerBeatMeters => NoteSpeedMeters / BeatsPerSecond;
 
 		MusicStream Stream;
 
@@ -380,18 +394,19 @@ namespace BeatSaber
 			float objTime = obj.Time - BeatsElapsed;
 
 			// if we're in the playable window or later, set position as normal
-			if ( objTime <= NotePlayableWindow )
+			if ( objTime <= HJD )
 			{
-				float targetPosition = objTime * UnitSize * NoteSpeed;
-				return objTime * UnitSize * NoteSpeed;
+				//float targetPosition = objTime * UnitSize * NoteSpeed;
+				return objTime * DistPerBeat;
 			}
 			else if ( animateIncoming )
 			{
-				float incomingTime = 1.0f - (objTime - NotePlayableWindow);
-				return Lerp( IncomingObstacleDistance, NotePlayableWindow * UnitSize * NoteSpeed, incomingTime );
+				float incomingTime = 1.0f - (objTime - HJD);
+				return Lerp( IncomingObstacleDistance, HJD * DistPerBeat, incomingTime );
 			}
 
-			return NotePlayableWindow * UnitSize * NoteSpeed;
+			//return NotePlayableWindow * UnitSize * NoteSpeed;
+			return HJD * DistPerBeat;
 		}
 
 		Vector3 GetNotePosition( BeatSaberNote note )
@@ -463,6 +478,7 @@ namespace BeatSaber
 			if ( !IsClient || !Playing )
 				return;
 
+			Log.Info("dist " + DistPerBeat);
 			InfoPanel.Progress.Progress = Stream.FractionElapsed;
 
 			if ( Stream.Finished )
@@ -508,7 +524,7 @@ namespace BeatSaber
 				}
 			}
 
-			while ( CurrentNote < Level.Notes.Length && Level.Notes[CurrentNote].Time - BeatsElapsed <= NotePlayableWindow + NoteIncomingWindow )
+			while ( CurrentNote < Level.Notes.Length && Level.Notes[CurrentNote].Time - BeatsElapsed <= HJD + NoteIncomingWindow )
 			{
 				var note = Level.Notes[CurrentNote++];
 
@@ -519,7 +535,7 @@ namespace BeatSaber
 				ActiveNotes.Add( ent );
 			}
 
-			while ( CurrentObstacle < Level.Obstacles.Length && Level.Obstacles[CurrentObstacle].Time - BeatsElapsed <= NotePlayableWindow + NoteIncomingWindow )
+			while ( CurrentObstacle < Level.Obstacles.Length && Level.Obstacles[CurrentObstacle].Time - BeatsElapsed <= HJD + NoteIncomingWindow )
 			{
 				var obstacle = Level.Obstacles[CurrentObstacle++];
 
@@ -652,6 +668,18 @@ namespace BeatSaber
 				foreach ( var pillar in Pillars )
 					pillar.RenderColor = (CycleColors[ColorCycle] * peak).WithAlpha( 1.0f );
 			}
+		}
+
+		int CalcHJD()
+		{
+			if ( DistPerBeatMeters > 9 ) return 1;
+			if ( DistPerBeatMeters > 4.5 ) return 2;
+			return 4;
+		}
+
+		float Max(float a, float b)
+		{
+			return a > b ? a : b;
 		}
 	}
 }

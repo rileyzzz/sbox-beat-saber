@@ -40,7 +40,7 @@ namespace BeatSaber
 			SetModel( "models/sabers/basic_saber.vmdl" );
 			SetupPhysicsFromModel( PhysicsMotionType.Static );
 
-
+			
 			Log.Info( "saber spawn" );
 			
 			Blade = Create<BladeEntity>();
@@ -50,43 +50,6 @@ namespace BeatSaber
 			//Blade.SetMaterialOverride( Red ? RedMaterial : BlueMaterial );
 
 		}
-
-		//public override void ClientSpawn()
-		//{
-		//	base.ClientSpawn();
-
-		//	//Log.Info( "saber clientspawn" );
-		//	//Blade = new BladeEntity() { Parent = this };
-		//	//Blade.Rotation = Rotation.From( 90.0f, 0.0f, 0.0f );
-		//	//Blade.SetMaterialOverride( Red ? RedMaterial : BlueMaterial );
-
-		//	//const float lightDist = 1.0f / numBladeLights;
-
-		//	//for ( int i = 0; i < numBladeLights; i++ )
-		//	//{
-		//	//	float offset = (i + 0.75f) * lightDist;
-
-		//	//	var BladeLight = new PointLightEntity() { Parent = this };
-		//	//	//BladeLight.Position = new Vector3( BladeHeight / 2.0f, 0.0f, 0.0f );
-		//	//	BladeLight.Position = new Vector3( offset * BladeHeight, 0.0f, 0.0f );
-		//	//	//BladeLight.Color = new Color( 0x2E67F8FF );
-		//	//	BladeLight.Color = new Color( Red ? 0xFF2020BA : 0xFFF8672E );
-		//	//	BladeLight.Brightness = 0.2f;
-				
-		//	//	BladeLight.EnableShadowCasting = false;
-		//	//	BladeLight.DynamicShadows = false;
-
-		//	//	BladeLight.Enabled = false;
-
-		//	//	BladeLights[i] = BladeLight;
-		//	//}
-
-
-		//	//BladeLight.LinearAttenuation = 1;
-		//	//BladeLight.QuadraticAttenuation = 0.01f;
-		//	//BladeLight.FadeDistanceMin = 8000.0f;
-		//	//BladeLight.FadeDistanceMax = 10000.0f;
-		//}
 
 
 		[Event.Tick]
