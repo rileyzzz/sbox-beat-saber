@@ -478,7 +478,6 @@ namespace BeatSaber
 			if ( !IsClient || !Playing )
 				return;
 
-			Log.Info("dist " + DistPerBeat);
 			InfoPanel.Progress.Progress = Stream.FractionElapsed;
 
 			if ( Stream.Finished )
